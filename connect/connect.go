@@ -1,0 +1,91 @@
+// Copyright 2015 lynkdb Authors, All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package connect // import "code.hooto.com/lynkdb/iomix/connect"
+
+import (
+	"sync"
+
+	"github.com/lessos/lessgo/types"
+)
+
+var (
+	mu sync.Mutex
+)
+
+//
+type ConnOptions struct {
+	//
+	Name types.NameIdentifier `json:"name"`
+
+	// Connector is the interface that must be implemented by a database/storage driver.
+	// example:
+	// 	iomix/fs/Connector
+	// 	iomix/skv/Connector
+	Connector types.NameIdentifier `json:"connector"`
+
+	// Driver ia a database/storage package that implemented the Connector interface.
+	Driver types.NameIdentifier `json:"driver"`
+
+	// Items defines configurations used by driver
+	Items types.Labels `json:"items"`
+}
+
+func (o *ConnOptions) Value(name string) string {
+
+	if v, ok := o.Items.Get(name); ok {
+		return v.String()
+	}
+
+	return ""
+}
+
+func (o *ConnOptions) SetValue(name, value string) {
+	o.Items.Set(name, value)
+}
+
+//
+type MultiConnOptions []*ConnOptions
+
+func (mo *MultiConnOptions) SetOptions(o ConnOptions) error {
+
+	mu.Lock()
+	defer mu.Unlock()
+
+	for _, prev := range *mo {
+
+		if prev.Name == o.Name {
+			return nil
+		}
+	}
+
+	*mo = append(*mo, &o)
+
+	return nil
+}
+
+func (mo *MultiConnOptions) Options(name types.NameIdentifier) *ConnOptions {
+
+	mu.Lock()
+	defer mu.Unlock()
+
+	for _, prev := range *mo {
+
+		if prev.Name == name {
+			return prev
+		}
+	}
+
+	return nil
+}
