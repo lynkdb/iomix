@@ -122,20 +122,24 @@ func (rs *Result) bytes() []byte {
 // 	return rs.Bytex().Uint()
 // }
 
+func (rs *Result) Int64() int64 {
+	return ValueBytes(rs.bytes()).Int64()
+}
+
 func (rs *Result) Uint8() uint8 {
-	return ValueUint(rs.bytes()).Uint8()
+	return ValueBytes(rs.bytes()).Uint8()
 }
 
 func (rs *Result) Uint16() uint16 {
-	return ValueUint(rs.bytes()).Uint16()
+	return ValueBytes(rs.bytes()).Uint16()
 }
 
 func (rs *Result) Uint32() uint32 {
-	return ValueUint(rs.bytes()).Uint32()
+	return ValueBytes(rs.bytes()).Uint32()
 }
 
 func (rs *Result) Uint64() uint64 {
-	return ValueUint(rs.bytes()).Uint64()
+	return ValueBytes(rs.bytes()).Uint64()
 }
 
 // func (rs *Result) Float32() float32 {

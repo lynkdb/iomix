@@ -27,6 +27,7 @@ const (
 
 type Connector interface {
 	RawInterface
+	KvInterface
 	PvInterface
 	Close() error
 }
@@ -44,22 +45,22 @@ type RawInterface interface {
 
 // Key-Value types
 type KvWriteOptions struct {
-	Expired    time.Time // UTC time
 	TimeToLive int64     // in seconds
+	Expired    time.Time // UTC time
 	LogEnable  bool
-	Encoder    interface{}
+	Encoder    ValueEncoder
 }
 
 // Key-Value APIs
 type KvInterface interface {
-	KvNew(key string, value interface{}, opts *KvWriteOptions) *Result
-	KvDel(key string) *Result
-	KvPut(key string, value interface{}, opts *KvWriteOptions) *Result
-	KvGet(key string) *Result
-	KvScan(offset, cutset string, limit int) *Result
-	KvRevScan(offset, cutset string, limit int) *Result
-	KvIncrby(key string, increment int) *Result
-	KvTtl(key string) *Result
+	KvNew(key []byte, value interface{}, opts *KvWriteOptions) *Result
+	KvDel(key ...[]byte) *Result
+	KvPut(key []byte, value interface{}, opts *KvWriteOptions) *Result
+	KvGet(key []byte) *Result
+	KvScan(offset, cutset []byte, limit int) *Result
+	// KvRevScan(offset, cutset string, limit int) *Result
+	KvIncrby(key []byte, increment int64) *Result
+	// KvTtl(key string) *Result
 }
 
 // Key-Value types

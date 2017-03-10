@@ -20,3 +20,13 @@ message ErrorMeta {
     string code    = 1;
     string message = 2;
 }
+
+message ValueMeta {
+    uint64 Version = 1;
+    uint64 Expired = 2;
+    uint64 Created = 3;
+    uint64 Updated = 4;
+    uint64 Size    = 5;
+    uint32 Sum     = 6;
+    string Name    = 7;
+}

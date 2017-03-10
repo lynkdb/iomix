@@ -20,9 +20,54 @@ import (
 	"testing"
 )
 
+var (
+	value_bench_uint_sets = [][]byte{}
+	value_bench_nint_sets = [][]byte{}
+)
+
+func init() {
+
+	for i := 0; i < 25; i++ {
+		bs, _ := ValueEncode(rand.Uint64(), nil)
+		value_bench_uint_sets = append(value_bench_uint_sets, bs)
+
+		nbs, _ := ValueEncode(-rand.Int63(), nil)
+		value_bench_nint_sets = append(value_bench_nint_sets, nbs)
+	}
+
+	for i := 0; i < 50; i++ {
+		bs, _ := ValueEncode(uint64(rand.Uint32()), nil)
+		value_bench_uint_sets = append(value_bench_uint_sets, bs)
+
+		nbs, _ := ValueEncode(-int64(rand.Uint32()), nil)
+		value_bench_nint_sets = append(value_bench_nint_sets, nbs)
+	}
+
+	for i := 0; i < 25; i++ {
+		bs, _ := ValueEncode(uint64(rand.Int31n(16777216)), nil)
+		value_bench_uint_sets = append(value_bench_uint_sets, bs)
+
+		nbs, _ := ValueEncode(-int64(rand.Int31n(16777216)), nil)
+		value_bench_nint_sets = append(value_bench_nint_sets, nbs)
+	}
+}
+
 func TestValueEncode(t *testing.T) {
 
-	u8s := []uint8{0, 1, 255}
+	us := []uint{0, 1, 1<<32 - 1}
+	for _, u := range us {
+
+		bs, err := ValueEncode(u, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if ValueBytes(bs).Uint() != u {
+			t.Fatal("Failed on ValueBytes/Decode/Uint")
+		}
+	}
+
+	u8s := []uint8{0, 1, 1<<8 - 1}
 	for _, u := range u8s {
 
 		bs, err := ValueEncode(u, nil)
@@ -30,12 +75,12 @@ func TestValueEncode(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if ValueUint(bs).Uint8() != u {
-			t.Fatal("Failed on ValueUint/Decode")
+		if ValueBytes(bs).Uint8() != u {
+			t.Fatal("Failed on ValueBytes/Decode/Uint")
 		}
 	}
 
-	u16s := []uint16{0, 1, 255, 256, 257, 65535}
+	u16s := []uint16{0, 1, 255, 256, 257, 1<<16 - 1}
 	for _, u := range u16s {
 
 		bs, err := ValueEncode(u, nil)
@@ -43,12 +88,12 @@ func TestValueEncode(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if ValueUint(bs).Uint16() != u {
-			t.Fatal("Failed on ValueUint/Decode")
+		if ValueBytes(bs).Uint16() != u {
+			t.Fatal("Failed on ValueBytes/Decode/Uint")
 		}
 	}
 
-	u32s := []uint32{0, 1, 255, 256, 257, 65535, 65536, 65537}
+	u32s := []uint32{0, 1, 255, 256, 257, 65535, 65536, 1<<32 - 1}
 	for _, u := range u32s {
 
 		bs, err := ValueEncode(u, nil)
@@ -56,12 +101,12 @@ func TestValueEncode(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if ValueUint(bs).Uint32() != u {
-			t.Fatal("Failed on ValueUint/Decode")
+		if ValueBytes(bs).Uint32() != u {
+			t.Fatal("Failed on ValueBytes/Decode/Uint")
 		}
 	}
 
-	u64s := []uint64{0, 1, 255, 256, 257, 65535, 65536, 65537}
+	u64s := []uint64{0, 1, 255, 256, 257, 65535, 65536, 1<<64 - 1}
 	for _, u := range u64s {
 
 		bs, err := ValueEncode(u, nil)
@@ -69,8 +114,8 @@ func TestValueEncode(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if ValueUint(bs).Uint64() != u {
-			t.Fatal("Failed on ValueUint/Decode")
+		if ValueBytes(bs).Uint64() != u {
+			t.Fatal("Failed on ValueBytes/Decode/Uint")
 		}
 	}
 
@@ -78,64 +123,110 @@ func TestValueEncode(t *testing.T) {
 
 		bs, _ := ValueEncode(u, nil)
 
-		n := ValueUint(bs).Uint64()
+		n := ValueBytes(bs).Uint64()
 
-		if Value_BinDecode_Uint64(bs) != Value_RawDecode_Uint64(bs) ||
-			Value_BinDecode_Uint64(bs) != n {
-			t.Fatal("Failed on ValueUint/Decode")
+		if value_bindecode_uint64(bs) != value_rawdecode_uint64(bs) ||
+			value_bindecode_uint64(bs) != n {
+			t.Fatal("Failed on ValueBytes/Decode/Uint")
 		}
 	}
 }
 
-var (
-	value_bench_sets = [][]byte{}
-)
+func TestValueEncodeNegative(t *testing.T) {
 
-func init() {
+	us := []int{-1 << 31, -1, 0, 1, 1<<31 - 1}
+	for _, u := range us {
 
-	for i := 0; i < 25; i++ {
-		bs, _ := ValueEncode(rand.Uint64(), nil)
-		value_bench_sets = append(value_bench_sets, bs)
+		bs, err := ValueEncode(u, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if ValueBytes(bs).Int() != u {
+			t.Fatal("Failed on ValueBytes/Decode/Int")
+		}
 	}
 
-	for i := 0; i < 50; i++ {
-		bs, _ := ValueEncode(uint64(rand.Uint32()), nil)
-		value_bench_sets = append(value_bench_sets, bs)
+	u8s := []int8{-1 << 7, -1, 0, 1, 1<<7 - 1}
+	for _, u := range u8s {
+
+		bs, err := ValueEncode(u, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if ValueBytes(bs).Int8() != u {
+			t.Fatal("Failed on ValueBytes/Decode/Int")
+		}
 	}
 
-	for i := 0; i < 25; i++ {
-		bs, _ := ValueEncode(uint64(rand.Int31n(16777216)), nil)
-		value_bench_sets = append(value_bench_sets, bs)
+	u16s := []int16{-1 << 15, -1, 0, 1, 1<<15 - 1}
+	for _, u := range u16s {
+
+		bs, err := ValueEncode(u, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if ValueBytes(bs).Int16() != u {
+			t.Fatal("Failed on ValueBytes/Decode/Int")
+		}
+	}
+
+	u32s := []int32{-1 << 31, -1, 0, 1, 1<<31 - 1}
+	for _, u := range u32s {
+
+		bs, err := ValueEncode(u, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if ValueBytes(bs).Int32() != u {
+			t.Fatal("Failed on ValueBytes/Decode/Int")
+		}
+	}
+
+	u64s := []int64{-1 << 63, -1, 0, 1, 1<<63 - 1}
+	for _, u := range u64s {
+
+		bs, err := ValueEncode(u, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if ValueBytes(bs).Int64() != u {
+			t.Fatal("Failed on ValueBytes/Decode/Int")
+		}
 	}
 }
 
 func Benchmark_Value_BinDecode(b *testing.B) {
 
-	if len(value_bench_sets) < 1 {
+	if len(value_bench_uint_sets) < 1 {
 		b.Fatal("No Samples")
 	}
 
 	for i := 0; i < b.N; i++ {
-		for _, b := range value_bench_sets {
-			Value_BinDecode_Uint64(b)
+		for _, b := range value_bench_uint_sets {
+			value_bindecode_uint64(b)
 		}
 	}
 }
 
 func Benchmark_Value_RawDecode(b *testing.B) {
 
-	if len(value_bench_sets) < 1 {
+	if len(value_bench_uint_sets) < 1 {
 		b.Fatal("No Samples")
 	}
 
 	for i := 0; i < b.N; i++ {
-		for _, b := range value_bench_sets {
-			Value_RawDecode_Uint64(b)
+		for _, b := range value_bench_uint_sets {
+			value_rawdecode_uint64(b)
 		}
 	}
 }
 
-func Value_RawDecode_Uint64(v []byte) uint64 {
+func value_rawdecode_uint64(v []byte) uint64 {
 
 	if len(v) <= 1 || v[0] != value_ns_uint {
 		return 0
@@ -178,7 +269,7 @@ func Value_RawDecode_Uint64(v []byte) uint64 {
 	return 0
 }
 
-func Value_BinDecode_Uint64(v []byte) uint64 {
+func value_bindecode_uint64(v []byte) uint64 {
 
 	if len(v) <= 1 || v[0] != value_ns_uint {
 		return 0
@@ -191,4 +282,30 @@ func Value_BinDecode_Uint64(v []byte) uint64 {
 	}
 
 	return binary.BigEndian.Uint64(ubs)
+}
+
+func Benchmark_ValueBytes_Decode(b *testing.B) {
+
+	if len(value_bench_uint_sets) < 1 {
+		b.Fatal("No Samples")
+	}
+
+	for i := 0; i < b.N; i++ {
+		for _, b := range value_bench_uint_sets {
+			ValueBytes(b).Uint64()
+		}
+	}
+}
+
+func Benchmark_ValueBytes_Decode_Negative(b *testing.B) {
+
+	if len(value_bench_nint_sets) < 1 {
+		b.Fatal("No Samples")
+	}
+
+	for i := 0; i < b.N; i++ {
+		for _, b := range value_bench_nint_sets {
+			ValueBytes(b).Int64()
+		}
+	}
 }
