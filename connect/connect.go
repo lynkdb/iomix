@@ -66,6 +66,19 @@ func (mo *MultiConnOptions) SetOptions(o ConnOptions) error {
 	for _, prev := range *mo {
 
 		if prev.Name == o.Name {
+
+			if len(o.Driver) > 0 && prev.Driver != o.Driver {
+				prev.Driver = o.Driver
+			}
+
+			if len(o.Connector) > 0 && prev.Connector != o.Connector {
+				prev.Connector = o.Connector
+			}
+
+			for _, v := range o.Items {
+				prev.Items.Set(v.Name, v.Value)
+			}
+
 			return nil
 		}
 	}
