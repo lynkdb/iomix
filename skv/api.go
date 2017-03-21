@@ -45,7 +45,7 @@ type RawInterface interface {
 
 // Key-Value types
 type KvWriteOptions struct {
-	TimeToLive int64     // in seconds
+	TimeToLive int64     // in milliseconds
 	Expired    time.Time // UTC time
 	LogEnable  bool
 	Encoder    ValueEncoder
