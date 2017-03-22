@@ -12,12 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package iotypes
+syntax = "proto3";
 
-import (
-	"testing"
-)
+package skv;
 
-func TestIotypes(t *testing.T) {
-
+message ValueMeta {
+    uint64 Version = 1;
+    uint64 Expired = 2;
+    uint64 Created = 3;
+    uint64 Updated = 4;
+    uint64 Size    = 5;
+    uint32 Sum     = 6;
+    string Name    = 7;
 }

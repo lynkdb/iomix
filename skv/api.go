@@ -14,6 +14,8 @@
 
 package skv // import "code.hooto.com/lynkdb/iomix/skv"
 
+//go:generate protoc --go_out=plugins=grpc:. pbtypes.proto
+
 import (
 	"time"
 )
@@ -45,10 +47,10 @@ type RawInterface interface {
 
 // Key-Value types
 type KvWriteOptions struct {
-	TimeToLive int64     // in milliseconds
-	Expired    time.Time // UTC time
-	LogEnable  bool
-	Encoder    ValueEncoder
+	Ttl       int64     // time to live in milliseconds
+	ExpireAt  time.Time // UTC time
+	LogEnable bool
+	Encoder   ValueEncoder
 }
 
 // Key-Value APIs
@@ -65,18 +67,19 @@ type KvInterface interface {
 
 // Key-Value types
 type PvWriteOptions struct {
-	Expire    int       // time to live in seconds
-	ExpireAt  time.Time // absolute time to live at
-	Version   uint64
-	LogEnable bool
-	Encoder   interface{}
+	Ttl         int64     // time to live in milliseconds
+	ExpireAt    time.Time // absolute time to live at
+	PrevVersion uint64
+	Version     uint64
+	LogEnable   bool
+	Encoder     interface{}
 }
 
 // Path-Value APIs
 type PvInterface interface {
 	//
 	PvNew(path string, value interface{}, opts *PvWriteOptions) *Result
-	PvDel(path string) *Result
+	PvDel(path string, opts *PvWriteOptions) *Result
 	PvPut(path string, value interface{}, opts *PvWriteOptions) *Result
 	PvGet(path string) *Result
 	PvScan(fold, offset, cutset string, limit int) *Result

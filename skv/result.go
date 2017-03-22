@@ -197,6 +197,10 @@ func (rs *Result) Decode(obj interface{}) error {
 	return ValueDecode(rs.bytes(), obj)
 }
 
+func (re *Result) Meta() ValueMeta {
+	return ValueMeta{}
+}
+
 //
 type ResultEntry struct {
 	Key   []byte
@@ -214,4 +218,8 @@ func (re *ResultEntry) Bytex() types.Bytex {
 
 func (re *ResultEntry) Decode(obj interface{}) error {
 	return ValueDecode(re.Value, obj)
+}
+
+func (re *ResultEntry) Meta() ValueMeta {
+	return ValueMeta{}
 }
