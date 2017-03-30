@@ -89,7 +89,7 @@ func (rs *Result) Bytex() types.Bytex {
 	return types.Bytex{}
 }
 
-func (rs *Result) bytes() []byte {
+func (rs *Result) Bytes() []byte {
 
 	if len(rs.Data) > 0 {
 		return rs.Data[0]
@@ -123,23 +123,23 @@ func (rs *Result) bytes() []byte {
 // }
 
 func (rs *Result) Int64() int64 {
-	return ValueBytes(rs.bytes()).Int64()
+	return ValueBytes(rs.Bytes()).Int64()
 }
 
 func (rs *Result) Uint8() uint8 {
-	return ValueBytes(rs.bytes()).Uint8()
+	return ValueBytes(rs.Bytes()).Uint8()
 }
 
 func (rs *Result) Uint16() uint16 {
-	return ValueBytes(rs.bytes()).Uint16()
+	return ValueBytes(rs.Bytes()).Uint16()
 }
 
 func (rs *Result) Uint32() uint32 {
-	return ValueBytes(rs.bytes()).Uint32()
+	return ValueBytes(rs.Bytes()).Uint32()
 }
 
 func (rs *Result) Uint64() uint64 {
-	return ValueBytes(rs.bytes()).Uint64()
+	return ValueBytes(rs.Bytes()).Uint64()
 }
 
 // func (rs *Result) Float32() float32 {
@@ -194,7 +194,7 @@ func (rs *Result) KvEach(fn func(entry *ResultEntry) int) int {
 }
 
 func (rs *Result) Decode(obj interface{}) error {
-	return ValueDecode(rs.bytes(), obj)
+	return ValueDecode(rs.Bytes(), obj)
 }
 
 func (re *Result) Meta() ValueMeta {
