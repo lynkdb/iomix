@@ -70,8 +70,10 @@ type PvWriteOptions struct {
 	Ttl         int64     // time to live in milliseconds
 	ExpireAt    time.Time // absolute time to live at
 	PrevVersion uint64
+	PrevValue   interface{}
 	Version     uint64
 	LogEnable   bool
+	Force       bool
 	Encoder     interface{}
 }
 
