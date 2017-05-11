@@ -163,7 +163,7 @@ func (rs *Result) KvList() []*ResultEntry {
 	ls := []*ResultEntry{}
 
 	for i := 0; i < (len(rs.Data) - 1); i += 2 {
-		ls = append(ls, &ResultEntry{rs.Data[i], rs.Data[i+1]})
+		ls = append(ls, &ResultEntry{Key: rs.Data[i], Value: rs.Data[i+1]})
 	}
 
 	return ls
@@ -183,7 +183,7 @@ func (rs *Result) KvEach(fn func(entry *ResultEntry) int) int {
 
 	for i := 0; i < (len(rs.Data) - 1); i += 2 {
 
-		if fn(&ResultEntry{rs.Data[i], rs.Data[i+1]}) < 0 {
+		if fn(&ResultEntry{Key: rs.Data[i], Value: rs.Data[i+1]}) < 0 {
 			break
 		}
 

@@ -85,7 +85,7 @@ type PvInterface interface {
 	PvPut(path string, value interface{}, opts *PvWriteOptions) *Result
 	PvGet(path string) *Result
 	PvScan(fold, offset, cutset string, limit int) *Result
-	// PvRevScan(fold, offset, cutset string, limit int) *Result
+	PvRevScan(fold, offset, cutset string, limit int) *Result
 	// PvIncrby(path string, increment int) *Result
 
 	//
