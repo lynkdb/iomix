@@ -197,7 +197,7 @@ func ValueEncode(value interface{}, encode ValueEncoder) ([]byte, error) {
 	case string:
 		enc_value = append([]byte{value_ns_bytes}, []byte(value.(string))...)
 
-		//
+	//
 	case uint:
 		enc_value = value_encode_uint(uint64(value.(uint)))
 
@@ -213,7 +213,7 @@ func ValueEncode(value interface{}, encode ValueEncoder) ([]byte, error) {
 	case uint64:
 		enc_value = value_encode_uint(value.(uint64))
 
-		//
+	//
 	case int:
 		enc_value = value_encode_int(int64(value.(int)))
 
@@ -229,15 +229,15 @@ func ValueEncode(value interface{}, encode ValueEncoder) ([]byte, error) {
 	case int64:
 		enc_value = value_encode_int(value.(int64))
 
-		//
-	case proto.Message:
-		if bs, err := proto.Marshal(value.(proto.Message)); err != nil {
-			return nil, errors.New("BadArgument ProtoBuf " + err.Error())
-		} else {
-			enc_value = append([]byte{value_ns_protobuf}, bs...)
-		}
+	//
+	// case proto.Message:
+	// 	if bs, err := proto.Marshal(value.(proto.Message)); err != nil {
+	// 		return nil, errors.New("BadArgument ProtoBuf " + err.Error())
+	// 	} else {
+	// 		enc_value = append([]byte{value_ns_protobuf}, bs...)
+	// 	}
 
-		//
+	//
 	case map[string]interface{}, struct{}, interface{}:
 		if bs_json, err := json.Marshal(value); err != nil {
 			return nil, errors.New("BadArgument JSON")
