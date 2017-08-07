@@ -38,6 +38,7 @@ var (
 	result_ok               = &Result{Status: ResultOK}
 	result_not_found        = &Result{Status: ResultNotFound}
 	result_bad_argument     = &Result{Status: ResultBadArgument}
+	result_network_err      = &Result{Status: ResultNetworkException}
 	result_server_exception = &Result{Status: ResultServerError}
 )
 
@@ -47,6 +48,10 @@ func NewResultNotFound() *Result {
 
 func NewResultBadArgument() *Result {
 	return result_bad_argument
+}
+
+func NewResultNetworkError() *Result {
+	return result_network_err
 }
 
 func NewResultError(status uint8, err string) *Result {
