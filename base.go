@@ -1,4 +1,18 @@
-package base
+// Copyright 2014 Eryx <evorui аt gmаil dοt cοm>, All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package rdb
 
 import (
 	"database/sql"
@@ -6,31 +20,56 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
-)
+	"sync"
 
-type Conn *sql.DB
+	"github.com/lynkdb/iomix/connect"
+	"github.com/lynkdb/iomix/rdb/modeler"
+)
 
 type Result sql.Result
 
 type Base struct {
-	Conn     *sql.DB
-	Config   Config
-	BaseStmt map[string]string
+	mu    sync.RWMutex
+	db    *sql.DB
+	opts  connect.ConnOptions
+	stmts map[string]string
 }
 
-var baseStmt = map[string]string{
+var baseStmts = map[string]string{
 	"insertIgnore": "INSERT OR IGNORE INTO `%s` (`%s`) VALUES (%s)",
 }
 
-func BaseInit(conf Config, conn *sql.DB) (*Base, error) {
+func NewBase(opts connect.ConnOptions, db *sql.DB) (*Base, error) {
 	return &Base{
-		Conn:     conn,
-		Config:   conf,
-		BaseStmt: baseStmt,
+		opts:  opts,
+		db:    db,
+		stmts: baseStmts,
 	}, nil
 }
 
-func (dc *Base) Insert(tableName string, item map[string]interface{}) (Result, error) {
+func (dc *Base) Setup(opts connect.ConnOptions, conn *sql.DB) error {
+	dc.opts = opts
+	dc.db = conn
+	return nil
+}
+
+func (dc *Base) StmtSet(name, value string) {
+
+	dc.mu.Lock()
+	defer dc.mu.Unlock()
+
+	dc.stmts[name] = value
+}
+
+func (dc *Base) Options() *connect.ConnOptions {
+	return &dc.opts
+}
+
+func (dc *Base) DB() *sql.DB {
+	return dc.db
+}
+
+func (dc *Base) Insert(table_name string, item map[string]interface{}) (Result, error) {
 
 	var res Result
 
@@ -42,11 +81,11 @@ func (dc *Base) Insert(tableName string, item map[string]interface{}) (Result, e
 	}
 
 	sql := fmt.Sprintf("INSERT INTO `%s` (`%s`) VALUES (%s)",
-		tableName,
+		table_name,
 		strings.Join(cols, "`,`"),
 		strings.Join(vars, ","))
 
-	stmt, err := dc.Conn.Prepare(sql)
+	stmt, err := dc.db.Prepare(sql)
 	if err != nil {
 		return res, err
 	}
@@ -60,7 +99,7 @@ func (dc *Base) Insert(tableName string, item map[string]interface{}) (Result, e
 	return res, nil
 }
 
-func (dc *Base) Delete(tableName string, fr Filter) (Result, error) {
+func (dc *Base) Delete(table_name string, fr Filter) (Result, error) {
 
 	var res Result
 
@@ -69,9 +108,9 @@ func (dc *Base) Delete(tableName string, fr Filter) (Result, error) {
 		return res, errors.New("Error in query syntax")
 	}
 
-	sql := fmt.Sprintf("DELETE FROM `%s` WHERE %s", tableName, frsql)
+	sql := fmt.Sprintf("DELETE FROM `%s` WHERE %s", table_name, frsql)
 
-	stmt, err := dc.Conn.Prepare(sql)
+	stmt, err := dc.db.Prepare(sql)
 	if err != nil {
 		return res, err
 	}
@@ -85,7 +124,7 @@ func (dc *Base) Delete(tableName string, fr Filter) (Result, error) {
 	return res, nil
 }
 
-func (dc *Base) Update(tableName string, item map[string]interface{}, fr Filter) (Result, error) {
+func (dc *Base) Update(table_name string, item map[string]interface{}, fr Filter) (Result, error) {
 
 	var res Result
 
@@ -103,11 +142,11 @@ func (dc *Base) Update(tableName string, item map[string]interface{}, fr Filter)
 	vals = append(vals, params...)
 
 	sql := fmt.Sprintf("UPDATE `%s` SET %s WHERE %s",
-		tableName,
+		table_name,
 		strings.Join(cols, ","),
 		frsql)
 
-	stmt, err := dc.Conn.Prepare(sql)
+	stmt, err := dc.db.Prepare(sql)
 	if err != nil {
 		return res, err
 	}
@@ -121,33 +160,33 @@ func (dc *Base) Update(tableName string, item map[string]interface{}, fr Filter)
 	return res, nil
 }
 
-func (dc *Base) Count(tableName string, fr Filter) (num int64, err error) {
+func (dc *Base) Count(table_name string, fr Filter) (num int64, err error) {
 
 	frsql, params := fr.Parse()
-	hasWhere := "WHERE"
+	has_where := "WHERE"
 	if len(params) == 0 {
-		hasWhere = ""
+		has_where = ""
 	}
 
-	sql := fmt.Sprintf("SELECT COUNT(*) FROM `%s` %s %s", tableName, hasWhere, frsql)
+	sql := fmt.Sprintf("SELECT COUNT(*) FROM `%s` %s %s", table_name, has_where, frsql)
 
-	stmt, err := dc.Conn.Prepare(sql)
+	stmt, err := dc.db.Prepare(sql)
 	if err != nil {
-		return
+		return 0, err
 	}
 	defer stmt.Close()
 
 	row := stmt.QueryRow(params...)
 	err = row.Scan(&num)
 
-	return
+	return num, err
 }
 
-func (dc *Base) InsertIgnore(tableName string, item map[string]interface{}) (Result, error) {
+func (dc *Base) InsertIgnore(table_name string, item map[string]interface{}) (Result, error) {
 
 	var res Result
 
-	sqlstmt, ok := dc.BaseStmt["insertIgnore"]
+	sqlstmt, ok := dc.stmts["insertIgnore"]
 	if !ok {
 		return res, errors.New("CurdStmt:insertIgnore missing")
 	}
@@ -159,8 +198,8 @@ func (dc *Base) InsertIgnore(tableName string, item map[string]interface{}) (Res
 		vals = append(vals, val)
 	}
 
-	sql := fmt.Sprintf(sqlstmt, tableName, strings.Join(cols, "`,`"), strings.Join(vars, ","))
-	stmt, err := dc.Conn.Prepare(sql)
+	sql := fmt.Sprintf(sqlstmt, table_name, strings.Join(cols, "`,`"), strings.Join(vars, ","))
+	stmt, err := dc.db.Prepare(sql)
 	if err != nil {
 		return res, err
 	}
@@ -176,7 +215,7 @@ func (dc *Base) InsertIgnore(tableName string, item map[string]interface{}) (Res
 
 func (dc *Base) QueryRaw(sql string, params ...interface{}) (rs []Entry, err error) {
 
-	stmt, err := dc.Conn.Prepare(sql)
+	stmt, err := dc.db.Prepare(sql)
 	if err != nil {
 		return
 	}
@@ -260,5 +299,9 @@ func (dc *Base) Fetch(q *QuerySet) (Entry, error) {
 }
 
 func (dc *Base) ExecRaw(query string, args ...interface{}) (Result, error) {
-	return dc.Conn.Exec(query, args...)
+	return dc.db.Exec(query, args...)
+}
+
+func (dc *Base) Modeler() (modeler.Modeler, error) {
+	return nil, errors.New("No Modeler INIT")
 }

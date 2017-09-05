@@ -1,12 +1,25 @@
-package base
+// Copyright 2014 Eryx <evorui аt gmаil dοt cοm>, All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package rdb
 
 import (
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"strconv"
 	"time"
-
-	"github.com/lessos/lessgo/utils"
 )
 
 type Field struct {
@@ -18,31 +31,27 @@ type Entry struct {
 	Fields map[string]*Field
 }
 
-func (e *Entry) Field(fieldName string) *Field {
-
-	field, ok := e.Fields[fieldName]
-	if ok {
+func (e *Entry) Field(field_name string) *Field {
+	if field, ok := e.Fields[field_name]; ok {
 		return field
 	}
-
 	return nil
 }
 
 func (f *Field) Bytes() []byte {
 
-	if f == nil || f.value.Interface() == nil {
-		return []byte{}
-	}
+	if f != nil && f.value.Interface() != nil {
 
-	vv := reflect.ValueOf(f.value.Interface())
+		vv := reflect.ValueOf(f.value.Interface())
 
-	switch f.valueType.Kind() {
-	case reflect.Slice:
-		if f.valueType.Elem().Kind() == reflect.Uint8 {
-			return f.value.Interface().([]byte)
+		switch f.valueType.Kind() {
+		case reflect.Slice:
+			if f.valueType.Elem().Kind() == reflect.Uint8 {
+				return f.value.Interface().([]byte)
+			}
+		case reflect.String:
+			return []byte(vv.String())
 		}
-	case reflect.String:
-		return []byte(vv.String())
 	}
 
 	return []byte{}
@@ -50,31 +59,30 @@ func (f *Field) Bytes() []byte {
 
 func (f *Field) String() string {
 
-	if f == nil || f.value.Interface() == nil {
-		return ""
-	}
+	if f != nil && f.value.Interface() != nil {
 
-	vv := reflect.ValueOf(f.value.Interface())
+		vv := reflect.ValueOf(f.value.Interface())
 
-	switch f.valueType.Kind() {
-	case reflect.Slice:
-		if f.valueType.Elem().Kind() == reflect.Uint8 {
-			return string(f.value.Interface().([]byte))
+		switch f.valueType.Kind() {
+		case reflect.Slice:
+			if f.valueType.Elem().Kind() == reflect.Uint8 {
+				return string(f.value.Interface().([]byte))
+			}
+		case reflect.String:
+			return vv.String()
+		case reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+			return fmt.Sprintf("%d", vv.Int())
+		case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+			return fmt.Sprintf("%d", vv.Uint())
 		}
-	case reflect.String:
-		return vv.String()
-	case reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		return fmt.Sprintf("%d", vv.Int())
-	case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-		return fmt.Sprintf("%d", vv.Uint())
 	}
 
 	return ""
 }
 
-// Json returns the map that marshals from the reply bytes as json in response .
-func (f *Field) Json(v interface{}) error {
-	return utils.JsonDecode(f.String(), v)
+// JsonDecode returns the map that marshals from the reply bytes as json in response .
+func (f *Field) JsonDecode(v interface{}) error {
+	return json.Unmarshal(f.Bytes(), &v)
 }
 
 func (f *Field) Int8() int8 {
@@ -91,17 +99,16 @@ func (f *Field) Int32() int32 {
 
 func (f *Field) Int64() int64 {
 
-	if f == nil || f.value.Interface() == nil {
-		return 0
-	}
+	if f != nil && f.value.Interface() != nil {
 
-	vv := reflect.ValueOf(f.value.Interface())
+		vv := reflect.ValueOf(f.value.Interface())
 
-	switch f.valueType.Kind() {
-	case reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		return vv.Int()
-	case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-		return int64(vv.Uint())
+		switch f.valueType.Kind() {
+		case reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+			return vv.Int()
+		case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+			return int64(vv.Uint())
+		}
 	}
 
 	return 0
@@ -125,17 +132,16 @@ func (f *Field) Uint32() uint32 {
 
 func (f *Field) Uint64() uint64 {
 
-	if f == nil || f.value.Interface() == nil {
-		return 0
-	}
+	if f != nil && f.value.Interface() != nil {
 
-	vv := reflect.ValueOf(f.value.Interface())
+		vv := reflect.ValueOf(f.value.Interface())
 
-	switch f.valueType.Kind() {
-	case reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		return uint64(vv.Int())
-	case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-		return vv.Uint()
+		switch f.valueType.Kind() {
+		case reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+			return uint64(vv.Int())
+		case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+			return vv.Uint()
+		}
 	}
 
 	return 0
@@ -147,15 +153,14 @@ func (f *Field) Uint() uint {
 
 func (f *Field) Float() float64 {
 
-	if f == nil || f.value.Interface() == nil {
-		return 0
-	}
+	if f != nil && f.value.Interface() != nil {
 
-	vv := reflect.ValueOf(f.value.Interface())
+		vv := reflect.ValueOf(f.value.Interface())
 
-	switch f.valueType.Kind() {
-	case reflect.Float32, reflect.Float64:
-		return vv.Float()
+		switch f.valueType.Kind() {
+		case reflect.Float32, reflect.Float64:
+			return vv.Float()
+		}
 	}
 
 	return 0
@@ -163,8 +168,7 @@ func (f *Field) Float() float64 {
 
 func (f *Field) Bool() bool {
 
-	b, err := strconv.ParseBool(f.String())
-	if err == nil {
+	if b, err := strconv.ParseBool(f.String()); err == nil {
 		return b
 	}
 
