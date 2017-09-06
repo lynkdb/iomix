@@ -4,7 +4,7 @@ iomix implements a universal interfaces for the client to handle the input/outpu
 ## some implemented clients based on iomix
 
 ### iomix/skv (Sorted Key/Value)
-* [http://code.hooto.com/lynkdb/kvgo](http://code.hooto.com/lynkdb/kvgo)
+* [http://github.com/lynkdb/kvgo](http://github.com/lynkdb/kvgo)
 
 ### iomix/fs (File System)
-* [http://code.hooto.com/lynkdb/localfs](http://code.hooto.com/lynkdb/localfs)
+* [http://github.com/lynkdb/localfs](http://github.com/lynkdb/localfs)

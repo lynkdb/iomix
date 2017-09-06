@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package connect // import "code.hooto.com/lynkdb/iomix/connect"
+package connect // import "github.com/lynkdb/iomix/connect"
 
 import (
 	"sync"
@@ -21,7 +21,7 @@ import (
 )
 
 var (
-	mu sync.Mutex
+	conn_mu sync.Mutex
 )
 
 //
@@ -60,8 +60,8 @@ type MultiConnOptions []*ConnOptions
 
 func (mo *MultiConnOptions) SetOptions(o ConnOptions) error {
 
-	mu.Lock()
-	defer mu.Unlock()
+	conn_mu.Lock()
+	defer conn_mu.Unlock()
 
 	for _, prev := range *mo {
 
@@ -90,8 +90,8 @@ func (mo *MultiConnOptions) SetOptions(o ConnOptions) error {
 
 func (mo *MultiConnOptions) Options(name types.NameIdentifier) *ConnOptions {
 
-	mu.Lock()
-	defer mu.Unlock()
+	conn_mu.Lock()
+	defer conn_mu.Unlock()
 
 	for _, prev := range *mo {
 

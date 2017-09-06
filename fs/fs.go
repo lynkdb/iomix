@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package fs // import "code.hooto.com/lynkdb/iomix/fs"
+package fs // import "github.com/lynkdb/iomix/fs"
 
 import (
 	"os"
