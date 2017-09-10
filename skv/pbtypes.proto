@@ -1,4 +1,4 @@
-// Copyright 2015 lynkdb Authors, All rights reserved.
+// Copyright 2015 Eryx <evorui аt gmаil dοt cοm>, All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,11 +17,19 @@ syntax = "proto3";
 package skv;
 
 message ValueMeta {
-    uint64 Version = 1;
-    uint64 Expired = 2;
-    uint64 Created = 3;
-    uint64 Updated = 4;
-    uint64 Size    = 5;
-    uint32 Sum     = 6;
-    string Name    = 7;
+    uint32 Type    = 1;
+    uint64 Version = 2;
+    uint64 Expired = 3;
+    uint64 Created = 4;
+    uint64 Updated = 5;
+    uint64 Size    = 6;
+    uint32 Sum     = 7;
+    uint64 Num     = 8;
+    string Name    = 13;
 }
+
+// message ProgKeyEntry {
+//     uint32 Type = 1;
+//     bytes  Data = 2;
+// }
+

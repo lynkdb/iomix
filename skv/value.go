@@ -1,4 +1,4 @@
-// Copyright 2015 lynkdb Authors, All rights reserved.
+// Copyright 2015 Eryx <evorui аt gmаil dοt cοm>, All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -25,9 +25,10 @@ import (
 const (
 	value_ns_bytes    uint8 = 0
 	value_ns_uint     uint8 = 1
-	value_ns_nint     uint8 = 2 // negative int
+	value_ns_nint     uint8 = 2
 	value_ns_json     uint8 = 20
 	value_ns_protobuf uint8 = 21
+	value_ns_prog     uint8 = 32
 )
 
 type ValueEncoder interface {
@@ -168,18 +169,31 @@ func ValueDecode(value []byte, object interface{}) error {
 		return errors.New("Invalid Data len<2")
 	}
 
-	switch value[0] {
+	offset := 0
+	if value[0] == value_ns_prog {
+		if len(value) < 3 {
+			return errors.New("Invalid PLO Value")
+		}
+		meta_len := int(value[1])
+		if (meta_len + 4) > len(value) {
+			return errors.New("Invalid PLO Value")
+		}
+
+		offset += meta_len + 2
+	}
+
+	switch value[offset] {
 
 	case value_ns_protobuf:
 		if obj, ok := object.(proto.Message); ok {
-			if err := proto.Unmarshal(value[1:], obj); err != nil {
+			if err := proto.Unmarshal(value[offset+1:], obj); err != nil {
 				return errors.New("Invalid ProtoBuf " + err.Error())
 			}
 			return nil
 		}
 
 	case value_ns_json:
-		return json.Unmarshal(value[1:], object)
+		return json.Unmarshal(value[offset+1:], object)
 	}
 
 	return errors.New("Invalid Data")

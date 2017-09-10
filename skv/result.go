@@ -1,4 +1,4 @@
-// Copyright 2015 lynkdb Authors, All rights reserved.
+// Copyright 2015 Eryx <evorui аt gmаil dοt cοm>, All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,8 +15,9 @@
 package skv
 
 import (
-	// "errors"
+	"hash/crc32"
 
+	"github.com/golang/protobuf/proto"
 	"github.com/lessos/lessgo/types"
 )
 
@@ -83,12 +84,19 @@ func (rs *Result) NotFound() bool {
 	return rs.Status == ResultNotFound
 }
 
+func (rs *Result) ValueSize() int64 {
+	if bs := rs.Bytes(); len(bs) > 1 {
+		return int64(len(bs) - 1)
+	}
+	return 0
+}
+
 func (rs *Result) Bytex() types.Bytex {
 
-	if len(rs.Data) > 0 &&
-		len(rs.Data[0]) > 1 &&
-		rs.Data[0][0] == 0 {
-		return types.Bytex(rs.Data[0][1:])
+	if bs := rs.Bytes(); len(bs) > 1 {
+		if bs[0] == value_ns_bytes {
+			return types.Bytex(bs[1:])
+		}
 	}
 
 	return types.Bytex{}
@@ -96,36 +104,27 @@ func (rs *Result) Bytex() types.Bytex {
 
 func (rs *Result) Bytes() []byte {
 
-	if len(rs.Data) > 0 {
+	if len(rs.Data) > 0 && len(rs.Data[0]) > 0 {
+
+		if rs.Data[0][0] == value_ns_prog {
+			meta_len := int(rs.Data[0][1])
+			if len(rs.Data[0]) > (meta_len + 2) {
+				return rs.Data[0][(meta_len + 2):]
+			}
+		}
+
 		return rs.Data[0]
 	}
 
 	return []byte{}
 }
 
-// func (rs *Result) Int() int {
-// 	return rs.Bytex().Int()
-// }
-
-// func (rs *Result) Int8() int8 {
-// 	return rs.Bytex().Int8()
-// }
-
-// func (rs *Result) Int16() int16 {
-// 	return rs.Bytex().Int16()
-// }
-
-// func (rs *Result) Int32() int32 {
-// 	return rs.Bytex().Int32()
-// }
-
-// func (rs *Result) Int64() int64 {
-// 	return rs.Bytex().Int64()
-// }
-
-// func (rs *Result) Uint() uint {
-// 	return rs.Bytex().Uint()
-// }
+func (rs *Result) Crc32() uint32 {
+	if bs := rs.Bytes(); len(bs) > 1 {
+		return crc32.ChecksumIEEE(bs[1:])
+	}
+	return 0
+}
 
 func (rs *Result) Int64() int64 {
 	return ValueBytes(rs.Bytes()).Int64()
@@ -202,8 +201,17 @@ func (rs *Result) Decode(obj interface{}) error {
 	return ValueDecode(rs.Bytes(), obj)
 }
 
-func (re *Result) Meta() ValueMeta {
-	return ValueMeta{}
+func (rs *Result) Meta() *ValueMeta {
+	if len(rs.Data) > 0 && len(rs.Data[0]) > 1 && rs.Data[0][0] == value_ns_prog {
+		meta_len := int(rs.Data[0][1])
+		if (meta_len + 2) <= len(rs.Data[0]) {
+			var meta ValueMeta
+			if err := proto.Unmarshal(rs.Data[0][2:(2+meta_len)], &meta); err == nil {
+				return &meta
+			}
+		}
+	}
+	return nil
 }
 
 //
@@ -212,19 +220,63 @@ type ResultEntry struct {
 	Value []byte
 }
 
+func (re *ResultEntry) ValueSize() int64 {
+	if bs := re.Bytes(); len(bs) > 1 {
+		return int64(len(bs) - 1)
+	}
+	return 0
+}
+
+func (re *ResultEntry) Crc32() uint32 {
+	if bs := re.Bytes(); len(bs) > 1 {
+		return crc32.ChecksumIEEE(bs[1:])
+	}
+	return 0
+}
+
+func (re *ResultEntry) Bytes() []byte {
+
+	if len(re.Value) > 1 && re.Value[0] == value_ns_prog {
+		meta_len := int(re.Value[1])
+		if len(re.Value) > (meta_len + 2) {
+			return re.Value[(meta_len + 2):]
+		}
+	}
+
+	return re.Value
+}
+
 func (re *ResultEntry) Bytex() types.Bytex {
 
-	if len(re.Value) > 1 && re.Value[0] == 0 {
-		return types.Bytex(re.Value[1:])
+	if bs := re.Bytes(); len(bs) > 1 && bs[0] == value_ns_bytes {
+		return types.Bytex(bs[1:])
 	}
 
 	return types.Bytex{}
 }
 
 func (re *ResultEntry) Decode(obj interface{}) error {
-	return ValueDecode(re.Value, obj)
+	return ValueDecode(re.Bytes(), obj)
 }
 
-func (re *ResultEntry) Meta() ValueMeta {
-	return ValueMeta{}
+func (re *ResultEntry) Int64() int64 {
+	return ValueBytes(re.Bytes()).Int64()
+}
+
+func (re *ResultEntry) Uint64() uint64 {
+	return ValueBytes(re.Bytes()).Uint64()
+}
+
+func (re *ResultEntry) Meta() *ValueMeta {
+	bs := re.Bytes()
+	if len(bs) > 1 && bs[0] == value_ns_prog {
+		meta_len := int(bs[1])
+		if (meta_len + 2) >= len(bs) {
+			var meta ValueMeta
+			if err := proto.Unmarshal(bs[2:(2+meta_len)], &meta); err == nil {
+				return &meta
+			}
+		}
+	}
+	return nil
 }
