@@ -329,6 +329,11 @@ func (o *ProgValue) Meta() *ValueMeta {
 	return o.meta
 }
 
+type ProgKeyValue struct {
+	Key ProgKey
+	Val ProgValue
+}
+
 const (
 	ProgOpMetaSum   uint64 = 1 << 1
 	ProgOpMetaSize  uint64 = 1 << 2

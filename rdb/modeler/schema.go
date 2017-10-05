@@ -28,7 +28,7 @@ type DatabaseEntry struct {
 	Tables  []*Table `json:"tables"`
 }
 
-func LoadDatabaseEntryFromFile(file string) (DatabaseEntry, error) {
+func NewDatabaseEntryFromJsonFile(file string) (DatabaseEntry, error) {
 
 	var ds DatabaseEntry
 	var err error
@@ -48,10 +48,10 @@ func LoadDatabaseEntryFromFile(file string) (DatabaseEntry, error) {
 		return ds, err
 	}
 
-	return LoadDatabaseEntryFromString(string(cfg))
+	return NewDatabaseEntryFromJson(string(cfg))
 }
 
-func LoadDatabaseEntryFromString(js string) (DatabaseEntry, error) {
+func NewDatabaseEntryFromJson(js string) (DatabaseEntry, error) {
 
 	var ds DatabaseEntry
 

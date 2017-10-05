@@ -21,7 +21,7 @@ import (
 )
 
 const (
-	ScanLimitMax = 10000
+	ScanLimitMax = 100000
 )
 
 type Connector interface {
