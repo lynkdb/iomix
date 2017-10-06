@@ -171,6 +171,21 @@ func (k *ProgKey) Valid() bool {
 	return len(k.Items) > 0
 }
 
+func (k *ProgKey) FoldLen() int {
+
+	n := len(k.Items)
+	if n > 0 {
+		for i, v := range k.Items {
+			if (i + 1) < len(k.Items) {
+				n += len(v.Data)
+			}
+		}
+		n += 1
+	}
+
+	return n
+}
+
 func (k *ProgKey) Encode(ns uint8) []byte {
 	if len(k.enc) > 0 {
 		return k.enc
@@ -196,7 +211,7 @@ func (k *ProgKey) Encode(ns uint8) []byte {
 	return k.enc
 }
 
-func (k *ProgKey) EncodeMeta(ns uint8) []byte {
+func (k *ProgKey) EncodeFoldMeta(ns uint8) []byte {
 	if len(k.Items) == 0 {
 		return []byte{}
 	}
@@ -302,6 +317,13 @@ func (o *ProgValue) Encode() []byte {
 		o.enc = append(o.enc, o.value...)
 	}
 	return o.enc
+}
+
+func (o *ProgValue) Crc32() uint32 {
+	if len(o.value) > 1 {
+		return crc32.ChecksumIEEE(o.value[1:])
+	}
+	return 0
 }
 
 func (o *ProgValue) ValueSize() int64 {

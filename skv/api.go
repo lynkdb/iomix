@@ -28,7 +28,6 @@ type Connector interface {
 	RawInterface
 	KvInterface
 	PvInterface
-	PoInterface
 	ProgConnector
 	Close() error
 }
@@ -63,18 +62,6 @@ type KvInterface interface {
 	KvIncrby(key []byte, increment int64) *Result
 }
 
-// Path-Value types
-type PathWriteOptions struct {
-	Ttl         int64     // time to live in milliseconds
-	ExpireAt    time.Time // absolute time to live at
-	PrevVersion uint64
-	PrevValue   interface{}
-	Version     uint64
-	LogEnable   bool
-	Force       bool
-	Encoder     interface{}
-}
-
 const (
 	PathEventCreated uint8 = 1
 	PathEventUpdated uint8 = 2
@@ -92,9 +79,9 @@ type PathEventHandler func(ev PathEventInterface)
 // Path-Value APIs
 type PvInterface interface {
 	//
-	PvNew(path string, value interface{}, opts *PathWriteOptions) *Result
-	PvDel(path string, opts *PathWriteOptions) *Result
-	PvPut(path string, value interface{}, opts *PathWriteOptions) *Result
+	PvNew(path string, value interface{}, opts *ProgWriteOptions) *Result
+	PvDel(path string, opts *ProgWriteOptions) *Result
+	PvPut(path string, value interface{}, opts *ProgWriteOptions) *Result
 	PvGet(path string) *Result
 	PvScan(fold, offset, cutset string, limit int) *Result
 	PvRevScan(fold, offset, cutset string, limit int) *Result
@@ -112,20 +99,4 @@ type PvInterface interface {
 	// PathEventRegister(handler PathEventHandler)
 
 	// Status
-}
-
-// Path-Object
-// path : {path}/{object key}
-type PoInterface interface {
-	//
-	// PoSchemaSync(path string, schema PoSchema) *Result
-
-	//
-	PoNew(path string, key, value interface{}, opts *PathWriteOptions) *Result
-	PoDel(path string, key interface{}, opts *PathWriteOptions) *Result
-	PoPut(path string, key, value interface{}, opts *PathWriteOptions) *Result
-	PoGet(path string, key interface{}) *Result
-	PoScan(path string, offset, cutset interface{}, limit int) *Result
-	PoRevScan(fold string, offset, cutset interface{}, limit int) *Result
-	// PoQuery(path string, qry *PoQuerySet) *Result
 }

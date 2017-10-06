@@ -19,6 +19,15 @@ import (
 	"encoding/hex"
 )
 
+func HexStringToBytes(s string) []byte {
+	if s != "" {
+		if dec, err := hex.DecodeString(s); err == nil {
+			return dec
+		}
+	}
+	return []byte{}
+}
+
 func BytesToHexString(bs []byte) string {
 	return hex.EncodeToString(bs)
 }
