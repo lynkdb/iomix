@@ -65,3 +65,7 @@ func Uint32ToBytes(v uint32) []byte {
 
 	return bs
 }
+
+func Uint32ToHexString(v uint32) string {
+	return BytesToHexString(Uint32ToBytes(v))
+}
