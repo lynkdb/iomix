@@ -406,6 +406,7 @@ func (m *ValueMeta) Timeout() bool {
 //
 // Programmable Key/Value
 type ProgConnector interface {
+	ProgNew(k ProgKey, v ProgValue, opts *ProgWriteOptions) *Result
 	ProgPut(k ProgKey, v ProgValue, opts *ProgWriteOptions) *Result
 	ProgGet(k ProgKey) *Result
 	ProgDel(k ProgKey, opts *ProgWriteOptions) *Result
