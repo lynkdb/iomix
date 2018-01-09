@@ -268,15 +268,16 @@ func (re *ResultEntry) Uint64() uint64 {
 }
 
 func (re *ResultEntry) Meta() *ValueMeta {
-	bs := re.Bytes()
-	if len(bs) > 1 && bs[0] == value_ns_prog {
-		meta_len := int(bs[1])
-		if (meta_len + 2) >= len(bs) {
+
+	if len(re.Value) > 1 && re.Value[0] == value_ns_prog {
+		meta_len := int(re.Value[1])
+		if (meta_len + 2) <= len(re.Value) {
 			var meta ValueMeta
-			if err := proto.Unmarshal(bs[2:(2+meta_len)], &meta); err == nil {
+			if err := proto.Unmarshal(re.Value[2:(2+meta_len)], &meta); err == nil {
 				return &meta
 			}
 		}
 	}
+
 	return nil
 }
