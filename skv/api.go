@@ -25,22 +25,10 @@ const (
 )
 
 type Connector interface {
-	RawInterface
 	KvInterface
-	PvInterface
 	ProgConnector
+	PvInterface
 	Close() error
-}
-
-//
-type RawInterface interface {
-	RawNew(key, value []byte, ttl int64) *Result
-	RawDel(key ...[]byte) *Result
-	RawPut(key, value []byte, ttl int64) *Result
-	RawGet(key []byte) *Result
-	RawScan(offset, cutset []byte, limit int) *Result
-	RawRevScan(offset, cutset []byte, limit int) *Result
-	// RawIncrby(key []byte, increment int) *Result
 }
 
 // Key-Value types
@@ -53,13 +41,13 @@ type KvWriteOptions struct {
 
 // Key-Value APIs
 type KvInterface interface {
-	KvNew(key []byte, value interface{}, opts *KvWriteOptions) *Result
-	KvDel(key ...[]byte) *Result
-	KvPut(key []byte, value interface{}, opts *KvWriteOptions) *Result
-	KvGet(key []byte) *Result
-	KvScan(offset, cutset []byte, limit int) *Result
-	KvRevScan(offset, cutset []byte, limit int) *Result
-	KvIncrby(key []byte, increment int64) *Result
+	KvNew(key []byte, value interface{}, opts *KvWriteOptions) Result
+	KvDel(key ...[]byte) Result
+	KvPut(key []byte, value interface{}, opts *KvWriteOptions) Result
+	KvGet(key []byte) Result
+	KvScan(offset, cutset []byte, limit int) Result
+	KvRevScan(offset, cutset []byte, limit int) Result
+	KvIncr(key []byte, increment int64) Result
 }
 
 const (
@@ -78,25 +66,10 @@ type PathEventHandler func(ev PathEventInterface)
 
 // Path-Value APIs
 type PvInterface interface {
-	//
-	PvNew(path string, value interface{}, opts *ProgWriteOptions) *Result
-	PvDel(path string, opts *ProgWriteOptions) *Result
-	PvPut(path string, value interface{}, opts *ProgWriteOptions) *Result
-	PvGet(path string) *Result
-	PvScan(fold, offset, cutset string, limit int) *Result
-	PvRevScan(fold, offset, cutset string, limit int) *Result
-	// PvIncrby(path string, increment int) *Result
-
-	//
-	// PvMetaGet(path string) *Result
-	// PvMetaScan(fold, offset, cutset string, limit int) *Result
-	// PvMetaVersionIncr(path string, group_number uint32, step int64) *Result
-
-	//
-	// PvLogScan(offset, cutset uint64, limit int) *Result
-
-	//
-	// PathEventRegister(handler PathEventHandler)
-
-	// Status
+	PvNew(path string, value interface{}, opts *ProgWriteOptions) Result
+	PvDel(path string, opts *ProgWriteOptions) Result
+	PvPut(path string, value interface{}, opts *ProgWriteOptions) Result
+	PvGet(path string) Result
+	PvScan(fold, offset, cutset string, limit int) Result
+	PvRevScan(fold, offset, cutset string, limit int) Result
 }

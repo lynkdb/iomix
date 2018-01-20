@@ -31,19 +31,8 @@ const (
 	ProgKeyEntryUnknown uint32 = 0
 	ProgKeyEntryBytes   uint32 = 1
 	ProgKeyEntryUint    uint32 = 4
-	ProgKeyEntryIncr    uint32 = 16
+	// ProgKeyEntryIncr    uint32 = 16
 )
-
-type ProgKeyEntry struct {
-	Type uint32
-	Data []byte
-}
-
-type ProgKey struct {
-	enc       []byte
-	fold_meta []byte
-	Items     []*ProgKeyEntry
-}
 
 func NewProgKey(values ...interface{}) ProgKey {
 	k := ProgKey{}
@@ -104,12 +93,12 @@ func (k *ProgKey) Append(value interface{}) error {
 	}
 	k.Items = append(k.Items, set)
 
-	if len(k.enc) > 0 {
-		k.enc = []byte{}
-	}
-	if len(k.fold_meta) > 0 {
-		k.fold_meta = []byte{}
-	}
+	// if len(k_enc) > 0 {
+	// 	k_enc = []byte{}
+	// }
+	// if len(k_fold_meta) > 0 {
+	// 	k_fold_meta = []byte{}
+	// }
 
 	return nil
 }
@@ -120,8 +109,8 @@ func (k *ProgKey) AppendTypeValue(t uint32, value interface{}) error {
 	}
 
 	switch t {
-	case ProgKeyEntryIncr:
-		k.Items = append(k.Items, &ProgKeyEntry{Type: t})
+	// case ProgKeyEntryIncr:
+	// 	k.Items = append(k.Items, &ProgKeyEntry{Type: t})
 
 	case ProgKeyEntryBytes, ProgKeyEntryUint:
 		return k.Append(value)
@@ -187,45 +176,45 @@ func (k *ProgKey) FoldLen() int {
 }
 
 func (k *ProgKey) Encode(ns uint8) []byte {
-	if len(k.enc) > 0 {
-		return k.enc
-	}
+	// if len(k_enc) > 0 {
+	// 	return k_enc
+	// }
 	if len(k.Items) == 0 {
 		return []byte{}
 	}
 
-	k.enc = []byte{ns, uint8(len(k.Items))}
+	k_enc := []byte{ns, uint8(len(k.Items))}
 	for i, v := range k.Items {
 		if (i + 1) < len(k.Items) {
 			if len(v.Data) > 0 {
-				k.enc = append(k.enc, uint8(len(v.Data)))
-				k.enc = append(k.enc, v.Data...)
+				k_enc = append(k_enc, uint8(len(v.Data)))
+				k_enc = append(k_enc, v.Data...)
 			} else {
-				k.enc = append(k.enc, uint8(0))
+				k_enc = append(k_enc, uint8(0))
 			}
 		} else if len(v.Data) > 0 {
-			k.enc = append(k.enc, v.Data...)
+			k_enc = append(k_enc, v.Data...)
 		}
 	}
 
-	return k.enc
+	return k_enc
 }
 
 func (k *ProgKey) EncodeFoldMeta(ns uint8) []byte {
 	if len(k.Items) == 0 {
 		return []byte{}
 	}
-	if len(k.fold_meta) > 0 {
-		return k.fold_meta
-	}
+	// if len(k_fold_meta) > 0 {
+	// 	return k_fold_meta
+	// }
 
-	k.fold_meta = []byte{ns, uint8(len(k.Items))}
+	k_fold_meta := []byte{ns, uint8(len(k.Items))}
 	for i := 0; i < (len(k.Items) - 1); i++ {
-		k.fold_meta = append(k.fold_meta, uint8(len(k.Items[i].Data)))
-		k.fold_meta = append(k.fold_meta, k.Items[i].Data...)
+		k_fold_meta = append(k_fold_meta, uint8(len(k.Items[i].Data)))
+		k_fold_meta = append(k_fold_meta, k.Items[i].Data...)
 	}
 
-	return k.fold_meta
+	return k_fold_meta
 }
 
 func (k *ProgKey) EncodeIndex(ns uint8, idx int) []byte {
@@ -270,108 +259,94 @@ func ProgKeyDecode(bs []byte) *ProgKey {
 	return nil
 }
 
-type ProgValue struct {
-	enc   []byte
-	meta  *ValueMeta
-	value []byte
-}
-
 //
-func NewProgValue(value interface{}) ProgValue {
-	obj := ProgValue{}
+func NewValueObject(value interface{}) ValueObject {
+	obj := ValueObject{}
 	obj.Set(value)
 	return obj
 }
 
-func (o *ProgValue) Valid() bool {
-	if o.meta == nil && len(o.value) < 1 {
+func (o *ValueObject) Valid() bool {
+	if o.Meta == nil && len(o.Value) < 1 {
 		return false
 	}
 	return true
 }
 
-func (o *ProgValue) Encode() []byte {
-	if len(o.enc) > 1 {
-		return o.enc
-	}
-	o.enc = []byte{value_ns_prog, 0}
-	if o.meta != nil {
+func (o *ValueObject) Encode() []byte {
+	// if len(o_enc) > 1 {
+	// 	return o_enc
+	// }
+	o_enc := []byte{value_ns_prog, 0}
+	if o.Meta != nil {
 
-		if len(o.value) > 1 {
-			if o.meta.Sum > 0 {
-				o.meta.Sum = crc32.ChecksumIEEE(o.value[1:])
+		if len(o.Value) > 1 {
+			if o.Meta.Sum > 0 {
+				o.Meta.Sum = crc32.ChecksumIEEE(o.Value[1:])
 			}
-			if o.meta.Size > 0 {
-				o.meta.Size = uint64(len(o.value) - 1)
+			if o.Meta.Size > 0 {
+				o.Meta.Size = uint64(len(o.Value) - 1)
 			}
 		}
 
-		if bs, err := proto.Marshal(o.meta); err == nil {
+		if bs, err := proto.Marshal(o.Meta); err == nil {
 			if len(bs) > 0 && len(bs) < 200 {
-				o.enc[1] = uint8(len(bs))
-				o.enc = append(o.enc, bs...)
+				o_enc[1] = uint8(len(bs))
+				o_enc = append(o_enc, bs...)
 			}
 		}
 	}
-	if len(o.value) > 1 {
-		o.enc = append(o.enc, o.value...)
+	if len(o.Value) > 1 {
+		o_enc = append(o_enc, o.Value...)
 	}
-	return o.enc
+	return o_enc
 }
 
-func (o *ProgValue) Crc32() uint32 {
-	if len(o.value) > 1 {
-		return crc32.ChecksumIEEE(o.value[1:])
+func (o *ValueObject) Crc32() uint32 {
+	if len(o.Value) > 1 {
+		return crc32.ChecksumIEEE(o.Value[1:])
 	}
 	return 0
 }
 
-func (o *ProgValue) ValueSize() int64 {
-	return int64(len(o.value) - 1)
+func (o *ValueObject) ValueSize() int64 {
+	return int64(len(o.Value) - 1)
 }
 
-func (o *ProgValue) Set(value interface{}) error {
+func (o *ValueObject) Set(value interface{}) error {
 	var err error
-	if o.value, err = ValueEncode(value, nil); err == nil {
-		if len(o.enc) > 0 {
-			o.enc = []byte{}
-		}
+	if o.Value, err = ValueEncode(value, nil); err == nil {
+		// if len(o_enc) > 0 {
+		// 	o_enc = []byte{}
+		// }
 	}
 	return err
 }
 
-func (o *ProgValue) ValueBytes() ValueBytes {
-	return ValueBytes(o.value)
+func (o *ValueObject) ValueBytes() ValueBytes {
+	return ValueBytes(o.Value)
 }
 
-func (o *ProgValue) Meta() *ValueMeta {
-	if o.meta == nil {
-		o.meta = &ValueMeta{}
+func (o *ValueObject) MetaObject() *MetaObject {
+	if o.Meta == nil {
+		o.Meta = &MetaObject{}
 	}
-	return o.meta
+	return o.Meta
 }
 
 type ProgKeyValue struct {
 	Key ProgKey
-	Val ProgValue
+	Val ValueObject
 }
 
 const (
-	ProgOpMetaSum   uint64 = 1 << 1
-	ProgOpMetaSize  uint64 = 1 << 2
-	ProgOpCreate    uint64 = 1 << 13
-	ProgOpForce     uint64 = 1 << 14
-	ProgOpFoldMeta  uint64 = 1 << 15
-	ProgOpLogEnable uint64 = 1 << 16
+	ProgOpMetaSum  uint64 = 1 << 1
+	ProgOpMetaSize uint64 = 1 << 2
+	ProgOpCreate   uint64 = 1 << 13
+	// ProgOpForce     uint64 = 1 << 14
+	ProgOpFoldMeta uint64 = 1 << 15
+	// ProgOpLogEnable uint64 = 1 << 16
 )
-
-type ProgWriteOptions struct {
-	Expired     time.Time
-	PrevSum     uint32
-	PrevVersion uint64
-	Version     uint64
-	Actions     uint64
-}
 
 func (o *ProgWriteOptions) OpSet(v uint64) *ProgWriteOptions {
 	o.Actions = (o.Actions | v)
@@ -382,21 +357,14 @@ func (o *ProgWriteOptions) OpAllow(v uint64) bool {
 	return (v & o.Actions) == v
 }
 
-func (o *ProgWriteOptions) ExpiredUnixNano() uint64 {
-	if ns := o.Expired.UTC().UnixNano(); ns > prog_ttl_zero {
-		return uint64(ns)
-	}
-	return 0
-}
-
-func (m *ValueMeta) Encode() []byte {
+func (m *MetaObject) Encode() []byte {
 	if bs, err := proto.Marshal(m); err == nil {
 		return append([]byte{value_ns_prog, uint8(len(bs))}, bs...)
 	}
 	return []byte{}
 }
 
-func (m *ValueMeta) Timeout() bool {
+func (m *MetaObject) Timeout() bool {
 	if m.Expired > 0 && m.Expired <= uint64(time.Now().UTC().UnixNano()) {
 		return true
 	}
@@ -406,10 +374,10 @@ func (m *ValueMeta) Timeout() bool {
 //
 // Programmable Key/Value
 type ProgConnector interface {
-	ProgNew(k ProgKey, v ProgValue, opts *ProgWriteOptions) *Result
-	ProgPut(k ProgKey, v ProgValue, opts *ProgWriteOptions) *Result
-	ProgGet(k ProgKey) *Result
-	ProgDel(k ProgKey, opts *ProgWriteOptions) *Result
-	ProgScan(offset, cutset ProgKey, limit int) *Result
-	ProgRevScan(offset, cutset ProgKey, limit int) *Result
+	ProgNew(k ProgKey, v ValueObject, opts *ProgWriteOptions) Result
+	ProgPut(k ProgKey, v ValueObject, opts *ProgWriteOptions) Result
+	ProgGet(k ProgKey) Result
+	ProgDel(k ProgKey, opts *ProgWriteOptions) Result
+	ProgScan(offset, cutset ProgKey, limit int) Result
+	ProgRevScan(offset, cutset ProgKey, limit int) Result
 }

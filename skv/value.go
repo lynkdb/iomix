@@ -15,11 +15,12 @@
 package skv
 
 import (
-	"encoding/binary"
 	"encoding/json"
 	"errors"
+	"strconv"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/lessos/lessgo/types"
 )
 
 const (
@@ -59,7 +60,18 @@ func (v ValueBytes) Int32() int32 {
 
 func (v ValueBytes) Int64() int64 {
 
-	if len(v) > 0 && (v[0] == value_ns_nint || v[0] == value_ns_uint) {
+	if len(v) < 2 {
+		return 0
+	}
+
+	switch v[0] {
+
+	case value_ns_bytes:
+		if i64, err := strconv.ParseInt(string(v[1:]), 10, 64); err == nil {
+			return i64
+		}
+
+	case value_ns_nint, value_ns_uint:
 
 		var i int64
 
@@ -99,8 +111,6 @@ func (v ValueBytes) Int64() int64 {
 		if v[0] == value_ns_nint {
 			return -i
 		}
-
-		return i
 	}
 
 	return 0
@@ -123,9 +133,18 @@ func (v ValueBytes) Uint32() uint32 {
 }
 
 func (v ValueBytes) Uint64() uint64 {
+	if len(v) < 2 {
+		return 0
+	}
 
-	if len(v) > 1 && v[0] == value_ns_uint {
+	switch v[0] {
 
+	case value_ns_bytes:
+		if u64, err := strconv.ParseUint(string(v[1:]), 10, 64); err == nil {
+			return u64
+		}
+
+	case value_ns_uint:
 		switch len(v) {
 		case 2:
 			return uint64(v[1])
@@ -161,6 +180,78 @@ func (v ValueBytes) Uint64() uint64 {
 	}
 
 	return 0
+}
+
+func (v ValueBytes) Bytex() types.Bytex {
+	if len(v) > 1 {
+		if v[0] == value_ns_bytes {
+			return types.Bytex(v[1:])
+		}
+	}
+	return types.Bytex{}
+}
+
+func (v ValueBytes) Bytes() []byte {
+
+	if len(v) > 0 {
+		if v[0] == value_ns_prog && len(v) > 1 {
+			meta_len := int(v[1])
+			if len(v) > (meta_len + 2) {
+				return v[(meta_len + 2):]
+			}
+		}
+	}
+
+	return v
+}
+
+func (v ValueBytes) String() string {
+	if len(v) > 1 {
+		if v[0] == value_ns_bytes {
+			return string(v[1:])
+		}
+	}
+	return ""
+}
+
+func (v ValueBytes) Bool() bool {
+	if bs := v.Bytes(); len(bs) > 0 {
+		if bs[0] == value_ns_bytes {
+			if b, err := strconv.ParseBool(string(bs[1:])); err == nil {
+				return b
+			}
+		}
+	}
+	return false
+}
+
+func (v ValueBytes) Float64() float64 {
+	if bs := v.Bytes(); len(bs) > 0 {
+		if bs[0] == value_ns_bytes {
+			if f64, err := strconv.ParseFloat(string(bs[1:]), 64); err == nil {
+				return f64
+			}
+		}
+	}
+	return 0
+}
+
+func (v ValueBytes) Meta() *MetaObject {
+	if len(v) > 1 && v[0] == value_ns_prog {
+		meta_len := int(v[1])
+		if (meta_len + 2) <= len(v) {
+			return MetaObjectDecode(v[2:(2 + meta_len)])
+		}
+	}
+	return nil
+}
+
+func MetaObjectDecode(data []byte) *MetaObject {
+	var meta MetaObject
+	if err := proto.Unmarshal(data, &meta); err == nil {
+		return &meta
+	}
+	return nil
 }
 
 func ValueDecode(value []byte, object interface{}) error {
@@ -267,43 +358,47 @@ func ValueEncode(value interface{}, encode ValueEncoder) ([]byte, error) {
 }
 
 func value_encode_uint(num uint64) []byte {
+	enc_value := []byte{value_ns_bytes}
+	enc_value = append(enc_value, []byte(strconv.FormatUint(num, 10))...)
 
-	enc_value := []byte{value_ns_uint}
+	// enc_value := []byte{value_ns_uint}
 
-	if num > 0 {
+	// if num > 0 {
 
-		buf := make([]byte, 8)
-		binary.BigEndian.PutUint64(buf, num)
+	// 	buf := make([]byte, 8)
+	// 	binary.BigEndian.PutUint64(buf, num)
 
-		for i := 0; i <= 7; i++ {
-			if buf[i] > 0 {
-				enc_value = append(enc_value, buf[i:]...)
-				break
-			}
-		}
-	}
+	// 	for i := 0; i <= 7; i++ {
+	// 		if buf[i] > 0 {
+	// 			enc_value = append(enc_value, buf[i:]...)
+	// 			break
+	// 		}
+	// 	}
+	// }
 
 	return enc_value
 }
 
 func value_encode_int(num int64) []byte {
+	enc_value := []byte{value_ns_bytes}
+	enc_value = append(enc_value, []byte(strconv.FormatInt(num, 10))...)
 
-	enc_value := []byte{value_ns_uint}
+	// enc_value := []byte{value_ns_uint}
 
-	if num < 0 {
-		enc_value[0] = value_ns_nint
-		num = (-num)
-	}
+	// if num < 0 {
+	// 	enc_value[0] = value_ns_nint
+	// 	num = (-num)
+	// }
 
-	buf := make([]byte, 8)
-	binary.BigEndian.PutUint64(buf, uint64(num))
+	// buf := make([]byte, 8)
+	// binary.BigEndian.PutUint64(buf, uint64(num))
 
-	for i := 0; i <= 7; i++ {
-		if buf[i] > 0 {
-			enc_value = append(enc_value, buf[i:]...)
-			break
-		}
-	}
+	// for i := 0; i <= 7; i++ {
+	// 	if buf[i] > 0 {
+	// 		enc_value = append(enc_value, buf[i:]...)
+	// 		break
+	// 	}
+	// }
 
 	return enc_value
 }

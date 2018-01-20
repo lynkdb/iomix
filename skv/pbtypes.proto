@@ -14,9 +14,11 @@
 
 syntax = "proto3";
 
+option optimize_for = LITE_RUNTIME;
+
 package skv;
 
-message ValueMeta {
+message MetaObject {
     uint32 Type    = 1;
     uint64 Version = 2;
     uint64 Expired = 3;
@@ -28,8 +30,31 @@ message ValueMeta {
     string Name    = 13;
 }
 
-// message ProgKeyEntry {
-//     uint32 Type = 1;
-//     bytes  Data = 2;
-// }
+message ValueObject {
+    MetaObject meta  = 1;
+    bytes      value = 2;
+}
 
+message ProgKeyEntry {
+    uint32 Type = 1;
+    bytes  Data = 2;
+}
+
+message ProgKey {
+    repeated ProgKeyEntry items = 1;
+}
+
+message ProgWriteOptions {
+//    uint64     version      = 1;
+    uint64     actions      = 2;
+    uint64     expired      = 3;
+    uint32     prev_sum     = 4;
+//    uint64     prev_version = 5;
+}
+
+message ProgKeyValueCommit {
+    MetaObject       meta    = 1;
+    ProgKey          key     = 2;
+    bytes            value   = 3;
+    ProgWriteOptions options = 4;
+}
