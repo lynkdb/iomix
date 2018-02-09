@@ -285,6 +285,11 @@ func ValueDecode(value []byte, object interface{}) error {
 
 	case value_ns_json:
 		return json.Unmarshal(value[offset+1:], object)
+
+	default:
+		if value[offset+1] == '{' || value[offset+1] == '[' {
+			return json.Unmarshal(value[offset+1:], object)
+		}
 	}
 
 	return errors.New("Invalid Data")
