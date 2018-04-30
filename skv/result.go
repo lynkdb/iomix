@@ -38,6 +38,7 @@ type Result interface {
 	Status() uint8
 	OK() bool
 	NotFound() bool
+	ErrorString() string
 	Bytes() []byte
 	Bytex() types.Bytex
 	String() string
@@ -60,6 +61,9 @@ type Result interface {
 	KvEach(fn func(entry *ResultEntry) int) int
 	KvEntry(i int) (entry *ResultEntry)
 	KvList() []*ResultEntry
+	KvSize() int
+	KvPairs() []Result
+	KvKey() []byte
 	Decode(obj interface{}) error
 	Meta() *MetaObject
 }
@@ -85,7 +89,7 @@ func (re *ResultEntry) Crc32() uint32 {
 }
 
 func (re *ResultEntry) Bytes() []byte {
-	if len(re.Value) > 1 && re.Value[0] == value_ns_prog {
+	if len(re.Value) > 1 && (re.Value[0] == value_ns_prog || re.Value[0] == value_ns_protobuf) {
 		meta_len := int(re.Value[1])
 		if len(re.Value) > (meta_len + 2) {
 			return re.Value[(meta_len + 2):]
@@ -118,7 +122,6 @@ func (re *ResultEntry) Uint64() uint64 {
 }
 
 func (re *ResultEntry) Meta() *MetaObject {
-
 	if len(re.Value) > 1 && re.Value[0] == value_ns_prog {
 		meta_len := int(re.Value[1])
 		if (meta_len + 2) <= len(re.Value) {
