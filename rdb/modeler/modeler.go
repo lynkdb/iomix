@@ -24,9 +24,9 @@ type Modeler interface {
 	ColumnDel(db_name, table_name string, col *Column) error
 	ColumnSet(db_name, table_name string, col *Column) error
 	ColumnQuery(db_name, table_name string) ([]*Column, error)
-	ColumnTypeSql(col *Column) string
+	ColumnTypeSql(db_name, table_name string, col *Column) string
 
-	TableAdd(table *Table) error
+	TableAdd(db_name string, table *Table) error
 	TableQuery(db_name string) ([]*Table, error)
 	TableExist(db_name, table_name string) bool
 

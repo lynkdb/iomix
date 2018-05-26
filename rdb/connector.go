@@ -21,6 +21,23 @@ import (
 	"github.com/lynkdb/iomix/rdb/modeler"
 )
 
+type Queryer interface {
+	Select(s string) Queryer
+	From(s string) Queryer
+	Order(s string) Queryer
+	Limit(num int64) Queryer
+	Offset(num int64) Queryer
+	Parse() (sql string, params []interface{})
+	Where() Filter
+	SetFilter(fr Filter)
+}
+
+type Filter interface {
+	And(expr string, args ...interface{}) Filter
+	Or(expr string, args ...interface{}) Filter
+	Parse() (where string, params []interface{})
+}
+
 type Connector interface {
 	//
 	Insert(table_name string, item map[string]interface{}) (Result, error)
@@ -28,13 +45,17 @@ type Connector interface {
 	Update(table_name string, item map[string]interface{}, fr Filter) (Result, error)
 	Count(table_name string, fr Filter) (num int64, err error)
 	InsertIgnore(table_name string, item map[string]interface{}) (Result, error)
+	Query(q Queryer) (rs []Entry, err error)
 	QueryRaw(sql string, params ...interface{}) (rs []Entry, err error)
-	Query(q *QuerySet) (rs []Entry, err error)
-	Fetch(q *QuerySet) (Entry, error)
+	Fetch(q Queryer) (Entry, error)
 	ExecRaw(query string, args ...interface{}) (Result, error)
 
 	//
 	Options() *connect.ConnOptions
 	DB() *sql.DB
 	Modeler() (modeler.Modeler, error)
+
+	//
+	NewFilter() Filter
+	NewQueryer() Queryer
 }

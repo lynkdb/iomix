@@ -15,7 +15,6 @@
 package rdb
 
 import (
-	"fmt"
 	"time"
 )
 
@@ -67,7 +66,6 @@ func TimeParse(timeString, format string) time.Time {
 
 	tp, err := time.ParseInLocation(TimeFormat(format), timeString, TimeZone)
 	if err != nil {
-		fmt.Println("TimeParseError", err)
 		return time.Now().In(TimeZone)
 	}
 

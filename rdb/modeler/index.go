@@ -14,6 +14,12 @@
 
 package modeler
 
+import (
+	"fmt"
+	"sort"
+	"strings"
+)
+
 const (
 	IndexTypeNull       int = 0
 	IndexTypeIndex      int = 1
@@ -26,6 +32,27 @@ type Index struct {
 	Name string   `json:"name"`
 	Type int      `json:"type"`
 	Cols []string `json:"cols"`
+}
+
+func (index *Index) NameKey(table_name string) string {
+	pn := ""
+	switch index.Type {
+	case IndexTypePrimaryKey:
+		pn = "pri"
+
+	case IndexTypeIndex:
+		pn = "idx"
+
+	case IndexTypeUnique:
+		pn = "uni"
+
+	default:
+		pn = "err"
+	}
+
+	sort.Strings(index.Cols)
+
+	return fmt.Sprintf("%s_%s__%s", pn, table_name, strings.Join(index.Cols, "_"))
 }
 
 // add columns which will be composite index
@@ -41,9 +68,11 @@ func (index *Index) AddColumn(cols ...string) *Index {
 		}
 
 		if !exist {
-			index.Cols = append(index.Cols, col)
+			index.Cols = append(index.Cols, strings.ToLower(col))
 		}
 	}
+
+	sort.Strings(index.Cols)
 
 	return index
 }

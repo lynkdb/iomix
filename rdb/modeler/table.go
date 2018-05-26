@@ -14,6 +14,12 @@
 
 package modeler
 
+import (
+	"fmt"
+	"sort"
+	"strings"
+)
+
 type Table struct {
 	Name    string    `json:"name"`
 	Engine  string    `json:"engine,omitempty"`
@@ -49,6 +55,23 @@ func (table *Table) AddColumn(col *Column) {
 }
 
 func (table *Table) AddIndex(index *Index) {
+
+	if index.Name == "" {
+		pre := "idx"
+		switch index.Type {
+		case IndexTypePrimaryKey:
+			pre = "pri"
+
+		case IndexTypeIndex:
+			pre = "idx"
+
+		case IndexTypeUnique:
+			pre = "uni"
+		}
+		sort.Strings(index.Cols)
+		index.Name = fmt.Sprintf("%s_%s__%s",
+			pre, table.Name, strings.ToLower(strings.Join(index.Cols, "_")))
+	}
 
 	for k, v := range table.Indexes {
 

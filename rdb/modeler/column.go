@@ -14,6 +14,12 @@
 
 package modeler
 
+import (
+	"fmt"
+	"strconv"
+	"strings"
+)
+
 var columnTypes = map[string]string{
 	"bool":            "bool",
 	"string":          "varchar(%v)",
@@ -44,8 +50,81 @@ type Column struct {
 	Extra    []string `json:"extra,omitempty"`
 }
 
+func (it *Column) IsInt() bool {
+	if strings.HasPrefix(it.Type, "int") ||
+		strings.HasPrefix(it.Type, "uint") {
+		return true
+	}
+	return false
+}
+
+func (it *Column) IsFloat() bool {
+	if strings.HasPrefix(it.Type, "float") {
+		return true
+	}
+	return false
+}
+
+func (it *Column) IsNumber() bool {
+	if it.IsInt() || it.IsFloat() {
+		return true
+	}
+	return false
+}
+
+func (it *Column) Fix() {
+	if it.IsInt() || it.IsFloat() {
+		it.NullAble = true
+		it.Default = "0"
+	}
+	if !it.IsInt() {
+		it.IncrAble = false
+	}
+	if it.IncrAble {
+		it.Default = ""
+	}
+	if it.Type == "string" {
+		if it.Length == "" {
+			it.Length = "20"
+		}
+	}
+	if it.Type == "float64-decimal" {
+		if it.Length == "" {
+			it.Length = "10,2"
+		} else {
+			lens := strings.Split(it.Length, ",")
+			if lens[0] == "" {
+				lens[0] = "10"
+			}
+			if len(lens) < 2 {
+				lens = append(lens, "2")
+			}
+
+			numeric_p, _ := strconv.Atoi(lens[0])
+			numeric_s, _ := strconv.Atoi(lens[1])
+
+			if numeric_s < 2 {
+				numeric_s = 2
+			} else if numeric_s > 10 {
+				numeric_s = 10
+			}
+
+			if numeric_p < 4 {
+				numeric_p = 4
+			}
+
+			if n := numeric_s - numeric_p; n > 0 {
+				numeric_p += n
+			}
+
+			it.Length = fmt.Sprintf("%d,%d", numeric_p, numeric_s)
+		}
+	}
+}
+
 func NewColumn(colName, colType, len string, null bool, def string) *Column {
-	return &Column{
+
+	c := &Column{
 		Name:     colName,
 		Type:     colType,
 		Length:   len,
@@ -55,4 +134,6 @@ func NewColumn(colName, colType, len string, null bool, def string) *Column {
 		Comment:  "",
 		Extra:    []string{},
 	}
+	c.Fix()
+	return c
 }

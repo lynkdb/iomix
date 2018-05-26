@@ -23,16 +23,21 @@ import (
 )
 
 type Field struct {
-	value     reflect.Value
-	valueType reflect.Type
+	value        reflect.Value
+	valueType    reflect.Type
+	datetime_fmt string
 }
 
 type Entry struct {
-	Fields map[string]*Field
+	Fields       map[string]*Field
+	datetime_fmt string
 }
 
 func (e *Entry) Field(field_name string) *Field {
 	if field, ok := e.Fields[field_name]; ok {
+		if e.datetime_fmt != "" {
+			field.datetime_fmt = e.datetime_fmt
+		}
 		return field
 	}
 	return nil
@@ -45,10 +50,12 @@ func (f *Field) Bytes() []byte {
 		vv := reflect.ValueOf(f.value.Interface())
 
 		switch f.valueType.Kind() {
+
 		case reflect.Slice:
 			if f.valueType.Elem().Kind() == reflect.Uint8 {
 				return f.value.Interface().([]byte)
 			}
+
 		case reflect.String:
 			return []byte(vv.String())
 		}
@@ -64,16 +71,25 @@ func (f *Field) String() string {
 		vv := reflect.ValueOf(f.value.Interface())
 
 		switch f.valueType.Kind() {
+
 		case reflect.Slice:
 			if f.valueType.Elem().Kind() == reflect.Uint8 {
 				return string(f.value.Interface().([]byte))
 			}
+
 		case reflect.String:
 			return vv.String()
+
 		case reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 			return fmt.Sprintf("%d", vv.Int())
+
 		case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 			return fmt.Sprintf("%d", vv.Uint())
+
+		case reflect.Struct:
+			if t, ok := f.value.Interface().(time.Time); ok {
+				return t.String()
+			}
 		}
 	}
 
@@ -104,10 +120,17 @@ func (f *Field) Int64() int64 {
 		vv := reflect.ValueOf(f.value.Interface())
 
 		switch f.valueType.Kind() {
+
 		case reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 			return vv.Int()
+
 		case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 			return int64(vv.Uint())
+
+		case reflect.Struct:
+			if t, ok := f.value.Interface().(time.Time); ok {
+				return t.UnixNano()
+			}
 		}
 	}
 
@@ -137,10 +160,17 @@ func (f *Field) Uint64() uint64 {
 		vv := reflect.ValueOf(f.value.Interface())
 
 		switch f.valueType.Kind() {
+
 		case reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 			return uint64(vv.Int())
+
 		case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 			return vv.Uint()
+
+		case reflect.Struct:
+			if t, ok := f.value.Interface().(time.Time); ok {
+				return uint64(t.UnixNano())
+			}
 		}
 	}
 
@@ -191,6 +221,15 @@ func (f *Field) TimeParse(format string) time.Time {
 		}
 	case reflect.String:
 		timeString = vv.String()
+
+	case reflect.Struct:
+		if t, ok := f.value.Interface().(time.Time); ok {
+			return t
+		}
+	}
+
+	if format == "datetime" && f.datetime_fmt != "" {
+		format = f.datetime_fmt
 	}
 
 	return TimeParse(timeString, format)
