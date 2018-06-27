@@ -22,6 +22,10 @@ import (
 	"time"
 )
 
+const (
+	status_not_found = 2
+)
+
 type Field struct {
 	value        reflect.Value
 	valueType    reflect.Type
@@ -31,6 +35,11 @@ type Field struct {
 type Entry struct {
 	Fields       map[string]*Field
 	datetime_fmt string
+	status       int
+}
+
+func (e *Entry) NotFound() bool {
+	return e.status == status_not_found
 }
 
 func (e *Entry) Field(field_name string) *Field {

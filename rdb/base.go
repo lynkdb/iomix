@@ -366,11 +366,12 @@ func (dc *Base) Fetch(q Queryer) (Entry, error) {
 		return entry, err
 	}
 
-	if len(rs) > 0 {
-		return rs[0], nil
+	if len(rs) == 0 {
+		entry.status = status_not_found
+		return entry, errors.New("Entry Not Found")
 	}
 
-	return entry, errors.New("Entry Not Found")
+	return rs[0], nil
 }
 
 func (dc *Base) ExecRaw(query string, args ...interface{}) (Result, error) {
