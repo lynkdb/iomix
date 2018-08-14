@@ -20,18 +20,19 @@ import (
 	"os"
 )
 
-type DatabaseEntry struct {
-	DbName  string   `json:"dbname"`
+type Schema struct {
 	Engine  string   `json:"engine,omitempty"`
 	Charset string   `json:"charset,omitempty"`
 	Version int      `json:"version,omitempty"`
 	Tables  []*Table `json:"tables"`
 }
 
-func NewDatabaseEntryFromJsonFile(file string) (DatabaseEntry, error) {
+func NewSchemaByJsonFile(file string) (*Schema, error) {
 
-	var ds DatabaseEntry
-	var err error
+	var (
+		ds  = &Schema{}
+		err error
+	)
 
 	if _, err := os.Stat(file); err != nil && os.IsNotExist(err) {
 		return ds, err
@@ -48,14 +49,14 @@ func NewDatabaseEntryFromJsonFile(file string) (DatabaseEntry, error) {
 		return ds, err
 	}
 
-	return NewDatabaseEntryFromJson(string(cfg))
+	return NewSchemaByJson(string(cfg))
 }
 
-func NewDatabaseEntryFromJson(js string) (DatabaseEntry, error) {
+func NewSchemaByJson(js string) (*Schema, error) {
 
-	var ds DatabaseEntry
+	ds := &Schema{}
 
-	err := json.Unmarshal([]byte(js), &ds)
+	err := json.Unmarshal([]byte(js), ds)
 
 	return ds, err
 }

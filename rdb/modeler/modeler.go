@@ -15,22 +15,25 @@
 package modeler
 
 type Modeler interface {
-	IndexAdd(db_name, table_name string, index *Index) error
-	IndexDel(db_name, table_name string, index *Index) error
-	IndexSet(db_name, table_name string, index *Index) error
-	IndexQuery(db_name, table_name string) ([]*Index, error)
+	SchemaDump() (*Schema, error)
+	SchemaSync(ds *Schema) error
+	SchemaSyncByJson(js string) error
+	SchemaSyncByJsonFile(path string) error
 
-	ColumnAdd(db_name, table_name string, col *Column) error
-	ColumnDel(db_name, table_name string, col *Column) error
-	ColumnSet(db_name, table_name string, col *Column) error
-	ColumnQuery(db_name, table_name string) ([]*Column, error)
-	ColumnTypeSql(db_name, table_name string, col *Column) string
+	TableDump() ([]*Table, error)
+	TableSync(table *Table) error
+	TableExist(tableName string) bool
 
-	TableAdd(db_name string, table *Table) error
-	TableQuery(db_name string) ([]*Table, error)
-	TableExist(db_name, table_name string) bool
+	ColumnDump(tableName string) ([]*Column, error)
+	ColumnSync(tableName string, col *Column) error
+	ColumnDel(tableName string, col *Column) error
+	ColumnSet(tableName string, col *Column) error
+	ColumnTypeSql(tableName string, col *Column) string
 
-	Sync(db_name string, ds DatabaseEntry) error
+	IndexDump(tableName string) ([]*Index, error)
+	IndexSync(tableName string, index *Index) error
+	IndexDel(tableName string, index *Index) error
+	IndexSet(tableName string, index *Index) error
+
 	QuoteStr(str string) string
-	DatabaseEntry(db_name string) (DatabaseEntry, error)
 }

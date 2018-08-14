@@ -40,20 +40,21 @@ type Filter interface {
 
 type Connector interface {
 	//
-	Insert(table_name string, item map[string]interface{}) (Result, error)
-	Delete(table_name string, fr Filter) (Result, error)
-	Update(table_name string, item map[string]interface{}, fr Filter) (Result, error)
-	Count(table_name string, fr Filter) (num int64, err error)
-	InsertIgnore(table_name string, item map[string]interface{}) (Result, error)
+	Insert(tableName string, item map[string]interface{}) (Result, error)
+	Delete(tableName string, fr Filter) (Result, error)
+	Update(tableName string, item map[string]interface{}, fr Filter) (Result, error)
+	Count(tableName string, fr Filter) (num int64, err error)
+	InsertIgnore(tableName string, item map[string]interface{}) (Result, error)
 	Query(q Queryer) (rs []Entry, err error)
 	QueryRaw(sql string, params ...interface{}) (rs []Entry, err error)
 	Fetch(q Queryer) (Entry, error)
 	ExecRaw(query string, args ...interface{}) (Result, error)
 
 	//
-	Options() *connect.ConnOptions
 	DB() *sql.DB
+	DBName() string
 	Modeler() (modeler.Modeler, error)
+	Options() *connect.ConnOptions
 
 	//
 	NewFilter() Filter
