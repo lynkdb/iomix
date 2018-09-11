@@ -62,8 +62,8 @@ func TestValueEncode(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if ValueBytes(bs).Uint() != u {
-			t.Fatal("Failed on ValueBytes/Decode/Uint")
+		if KvValueBytes(bs).Uint() != u {
+			t.Fatal("Failed on KvValueBytes/Decode/Uint")
 		}
 	}
 
@@ -75,8 +75,8 @@ func TestValueEncode(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if ValueBytes(bs).Uint8() != u {
-			t.Fatal("Failed on ValueBytes/Decode/Uint")
+		if KvValueBytes(bs).Uint8() != u {
+			t.Fatal("Failed on KvValueBytes/Decode/Uint")
 		}
 	}
 
@@ -88,8 +88,8 @@ func TestValueEncode(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if ValueBytes(bs).Uint16() != u {
-			t.Fatal("Failed on ValueBytes/Decode/Uint")
+		if KvValueBytes(bs).Uint16() != u {
+			t.Fatal("Failed on KvValueBytes/Decode/Uint")
 		}
 	}
 
@@ -101,8 +101,8 @@ func TestValueEncode(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if ValueBytes(bs).Uint32() != u {
-			t.Fatal("Failed on ValueBytes/Decode/Uint")
+		if KvValueBytes(bs).Uint32() != u {
+			t.Fatal("Failed on KvValueBytes/Decode/Uint")
 		}
 	}
 
@@ -114,8 +114,8 @@ func TestValueEncode(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if ValueBytes(bs).Uint64() != u {
-			t.Fatal("Failed on ValueBytes/Decode/Uint")
+		if KvValueBytes(bs).Uint64() != u {
+			t.Fatal("Failed on KvValueBytes/Decode/Uint")
 		}
 	}
 
@@ -123,11 +123,11 @@ func TestValueEncode(t *testing.T) {
 
 		bs, _ := ValueEncode(u, nil)
 
-		n := ValueBytes(bs).Uint64()
+		n := KvValueBytes(bs).Uint64()
 
 		if value_bindecode_uint64(bs) != value_rawdecode_uint64(bs) ||
 			value_bindecode_uint64(bs) != n {
-			t.Fatal("Failed on ValueBytes/Decode/Uint")
+			t.Fatal("Failed on KvValueBytes/Decode/Uint")
 		}
 	}
 }
@@ -142,8 +142,8 @@ func TestValueEncodeNegative(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if ValueBytes(bs).Int() != u {
-			t.Fatal("Failed on ValueBytes/Decode/Int")
+		if KvValueBytes(bs).Int() != u {
+			t.Fatal("Failed on KvValueBytes/Decode/Int")
 		}
 	}
 
@@ -155,8 +155,8 @@ func TestValueEncodeNegative(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if ValueBytes(bs).Int8() != u {
-			t.Fatal("Failed on ValueBytes/Decode/Int")
+		if KvValueBytes(bs).Int8() != u {
+			t.Fatal("Failed on KvValueBytes/Decode/Int")
 		}
 	}
 
@@ -168,8 +168,8 @@ func TestValueEncodeNegative(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if ValueBytes(bs).Int16() != u {
-			t.Fatal("Failed on ValueBytes/Decode/Int")
+		if KvValueBytes(bs).Int16() != u {
+			t.Fatal("Failed on KvValueBytes/Decode/Int")
 		}
 	}
 
@@ -181,8 +181,8 @@ func TestValueEncodeNegative(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if ValueBytes(bs).Int32() != u {
-			t.Fatal("Failed on ValueBytes/Decode/Int")
+		if KvValueBytes(bs).Int32() != u {
+			t.Fatal("Failed on KvValueBytes/Decode/Int")
 		}
 	}
 
@@ -194,8 +194,8 @@ func TestValueEncodeNegative(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if ValueBytes(bs).Int64() != u {
-			t.Fatal("Failed on ValueBytes/Decode/Int")
+		if KvValueBytes(bs).Int64() != u {
+			t.Fatal("Failed on KvValueBytes/Decode/Int")
 		}
 	}
 }
@@ -284,7 +284,7 @@ func value_bindecode_uint64(v []byte) uint64 {
 	return binary.BigEndian.Uint64(ubs)
 }
 
-func Benchmark_ValueBytes_Decode(b *testing.B) {
+func Benchmark_KvValueBytes_Decode(b *testing.B) {
 
 	if len(value_bench_uint_sets) < 1 {
 		b.Fatal("No Samples")
@@ -292,12 +292,12 @@ func Benchmark_ValueBytes_Decode(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		for _, b := range value_bench_uint_sets {
-			ValueBytes(b).Uint64()
+			KvValueBytes(b).Uint64()
 		}
 	}
 }
 
-func Benchmark_ValueBytes_Decode_Negative(b *testing.B) {
+func Benchmark_KvValueBytes_Decode_Negative(b *testing.B) {
 
 	if len(value_bench_nint_sets) < 1 {
 		b.Fatal("No Samples")
@@ -305,7 +305,7 @@ func Benchmark_ValueBytes_Decode_Negative(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		for _, b := range value_bench_nint_sets {
-			ValueBytes(b).Int64()
+			KvValueBytes(b).Int64()
 		}
 	}
 }

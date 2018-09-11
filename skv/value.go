@@ -32,33 +32,33 @@ const (
 	value_ns_prog     uint8 = 32
 )
 
-type ValueEncoder interface {
+type KvValueEncoder interface {
 	Encode(value interface{}) error
 }
 
-type ValueDecoder interface {
+type KvValueDecoder interface {
 	Decode(value []byte, object interface{}) error
 }
 
-type ValueBytes []byte
+type KvValueBytes []byte
 
-func (v ValueBytes) Int() int {
+func (v KvValueBytes) Int() int {
 	return int(v.Int64())
 }
 
-func (v ValueBytes) Int8() int8 {
+func (v KvValueBytes) Int8() int8 {
 	return int8(v.Int64())
 }
 
-func (v ValueBytes) Int16() int16 {
+func (v KvValueBytes) Int16() int16 {
 	return int16(v.Int64())
 }
 
-func (v ValueBytes) Int32() int32 {
+func (v KvValueBytes) Int32() int32 {
 	return int32(v.Int64())
 }
 
-func (v ValueBytes) Int64() int64 {
+func (v KvValueBytes) Int64() int64 {
 
 	if len(v) < 2 {
 		return 0
@@ -116,23 +116,23 @@ func (v ValueBytes) Int64() int64 {
 	return 0
 }
 
-func (v ValueBytes) Uint() uint {
+func (v KvValueBytes) Uint() uint {
 	return uint(v.Uint64())
 }
 
-func (v ValueBytes) Uint8() uint8 {
+func (v KvValueBytes) Uint8() uint8 {
 	return uint8(v.Uint64())
 }
 
-func (v ValueBytes) Uint16() uint16 {
+func (v KvValueBytes) Uint16() uint16 {
 	return uint16(v.Uint64())
 }
 
-func (v ValueBytes) Uint32() uint32 {
+func (v KvValueBytes) Uint32() uint32 {
 	return uint32(v.Uint64())
 }
 
-func (v ValueBytes) Uint64() uint64 {
+func (v KvValueBytes) Uint64() uint64 {
 	if len(v) < 2 {
 		return 0
 	}
@@ -182,7 +182,7 @@ func (v ValueBytes) Uint64() uint64 {
 	return 0
 }
 
-func (v ValueBytes) Bytex() types.Bytex {
+func (v KvValueBytes) Bytex() types.Bytex {
 	if len(v) > 1 {
 		if v[0] == value_ns_bytes {
 			return types.Bytex(v[1:])
@@ -191,7 +191,7 @@ func (v ValueBytes) Bytex() types.Bytex {
 	return types.Bytex{}
 }
 
-func (v ValueBytes) Bytes() []byte {
+func (v KvValueBytes) Bytes() []byte {
 
 	if len(v) > 0 {
 		if v[0] == value_ns_prog && len(v) > 1 {
@@ -205,7 +205,7 @@ func (v ValueBytes) Bytes() []byte {
 	return v
 }
 
-func (v ValueBytes) String() string {
+func (v KvValueBytes) String() string {
 	if len(v) > 1 {
 		if v[0] == value_ns_bytes {
 			return string(v[1:])
@@ -214,7 +214,7 @@ func (v ValueBytes) String() string {
 	return ""
 }
 
-func (v ValueBytes) Bool() bool {
+func (v KvValueBytes) Bool() bool {
 	if bs := v.Bytes(); len(bs) > 0 {
 		if bs[0] == value_ns_bytes {
 			if b, err := strconv.ParseBool(string(bs[1:])); err == nil {
@@ -225,7 +225,7 @@ func (v ValueBytes) Bool() bool {
 	return false
 }
 
-func (v ValueBytes) Float64() float64 {
+func (v KvValueBytes) Float64() float64 {
 	if bs := v.Bytes(); len(bs) > 0 {
 		if bs[0] == value_ns_bytes {
 			if f64, err := strconv.ParseFloat(string(bs[1:]), 64); err == nil {
@@ -236,18 +236,18 @@ func (v ValueBytes) Float64() float64 {
 	return 0
 }
 
-func (v ValueBytes) Meta() *MetaObject {
+func (v KvValueBytes) Meta() *KvMeta {
 	if len(v) > 1 && v[0] == value_ns_prog {
 		meta_len := int(v[1])
 		if (meta_len + 2) <= len(v) {
-			return MetaObjectDecode(v[2:(2 + meta_len)])
+			return KvMetaDecode(v[2:(2 + meta_len)])
 		}
 	}
 	return nil
 }
 
-func MetaObjectDecode(data []byte) *MetaObject {
-	var meta MetaObject
+func KvMetaDecode(data []byte) *KvMeta {
+	var meta KvMeta
 	if err := proto.Unmarshal(data, &meta); err == nil {
 		return &meta
 	}
@@ -295,7 +295,7 @@ func ValueDecode(value []byte, object interface{}) error {
 	return errors.New("Invalid Data")
 }
 
-func ValueEncode(value interface{}, encode ValueEncoder) ([]byte, error) {
+func ValueEncode(value interface{}, encode KvValueEncoder) ([]byte, error) {
 
 	var enc_value []byte
 

@@ -65,7 +65,7 @@ type Result interface {
 	KvPairs() []Result
 	KvKey() []byte
 	Decode(obj interface{}) error
-	Meta() *MetaObject
+	Meta() *KvMeta
 }
 
 //
@@ -114,18 +114,18 @@ func (re *ResultEntry) Decode(obj interface{}) error {
 }
 
 func (re *ResultEntry) Int64() int64 {
-	return ValueBytes(re.Bytes()).Int64()
+	return KvValueBytes(re.Bytes()).Int64()
 }
 
 func (re *ResultEntry) Uint64() uint64 {
-	return ValueBytes(re.Bytes()).Uint64()
+	return KvValueBytes(re.Bytes()).Uint64()
 }
 
-func (re *ResultEntry) Meta() *MetaObject {
+func (re *ResultEntry) Meta() *KvMeta {
 	if len(re.Value) > 1 && re.Value[0] == value_ns_prog {
 		meta_len := int(re.Value[1])
 		if (meta_len + 2) <= len(re.Value) {
-			var meta MetaObject
+			var meta KvMeta
 			if err := proto.Unmarshal(re.Value[2:(2+meta_len)], &meta); err == nil {
 				return &meta
 			}

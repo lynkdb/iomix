@@ -14,40 +14,17 @@
 
 package skv // import "github.com/lynkdb/iomix/skv"
 
-//go:generate protoc --go_out=plugins=grpc:. pbtypes.proto
-
-import (
-	"time"
-)
+//go:generate protoc --go_out=plugins=grpc:. skv.proto
 
 const (
 	ScanLimitMax = 100000
 )
 
 type Connector interface {
-	KvInterface
-	ProgConnector
-	PvInterface
+	KvConnector
+	KvProgConnector
+	PvConnector
 	Close() error
-}
-
-// Key-Value types
-type KvWriteOptions struct {
-	Ttl       int64     // time to live in milliseconds
-	ExpireAt  time.Time // UTC time
-	LogEnable bool
-	Encoder   ValueEncoder
-}
-
-// Key-Value APIs
-type KvInterface interface {
-	KvNew(key []byte, value interface{}, opts *KvWriteOptions) Result
-	KvDel(key ...[]byte) Result
-	KvPut(key []byte, value interface{}, opts *KvWriteOptions) Result
-	KvGet(key []byte) Result
-	KvScan(offset, cutset []byte, limit int) Result
-	KvRevScan(offset, cutset []byte, limit int) Result
-	KvIncr(key []byte, increment int64) Result
 }
 
 const (
@@ -65,10 +42,10 @@ type PathEventInterface interface {
 type PathEventHandler func(ev PathEventInterface)
 
 // Path-Value APIs
-type PvInterface interface {
-	PvNew(path string, value interface{}, opts *ProgWriteOptions) Result
-	PvDel(path string, opts *ProgWriteOptions) Result
-	PvPut(path string, value interface{}, opts *ProgWriteOptions) Result
+type PvConnector interface {
+	PvNew(path string, value interface{}, opts *KvProgWriteOptions) Result
+	PvDel(path string, opts *KvProgWriteOptions) Result
+	PvPut(path string, value interface{}, opts *KvProgWriteOptions) Result
 	PvGet(path string) Result
 	PvScan(fold, offset, cutset string, limit int) Result
 	PvRevScan(fold, offset, cutset string, limit int) Result
