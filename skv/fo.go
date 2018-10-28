@@ -29,12 +29,12 @@ const (
 )
 
 type FileObjectConnector interface {
-	FoMpInit(sets FileObjectEntryInit) Result
-	FoMpPut(sets FileObjectEntryBlock) Result
-	FoMpGet(sets FileObjectEntryBlock) Result
-	FoGet(key string) Result
-	FoScan(offset, cutset string, limit int) Result
-	FoRevScan(offset, cutset string, limit int) Result
+	// FoMpInit(sets FileObjectEntryInit) Result
+	// FoMpPut(sets FileObjectEntryBlock) Result
+	// FoMpGet(sets FileObjectEntryBlock) Result
+	// FoGet(key string) Result
+	// FoScan(offset, cutset string, limit int) Result
+	// FoRevScan(offset, cutset string, limit int) Result
 	FoFilePut(src_path string, dst_path string) Result
 	FoFileOpen(path string) (io.ReadSeeker, error)
 }
