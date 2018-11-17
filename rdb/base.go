@@ -381,3 +381,9 @@ func (dc *Base) ExecRaw(query string, args ...interface{}) (Result, error) {
 func (dc *Base) Modeler() (modeler.Modeler, error) {
 	return nil, errors.New("No Modeler INIT")
 }
+
+func (dc *Base) Close()  {
+	if dc.db != nil {
+		dc.db.Close()
+	}
+}

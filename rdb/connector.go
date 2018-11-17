@@ -55,6 +55,7 @@ type Connector interface {
 	DBName() string
 	Modeler() (modeler.Modeler, error)
 	Options() *connect.ConnOptions
+	Close()
 
 	//
 	NewFilter() Filter
