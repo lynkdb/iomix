@@ -295,6 +295,13 @@ func ValueDecode(value []byte, object interface{}) error {
 	return errors.New("Invalid Data")
 }
 
+func ValueEncodeBytes(value interface{}, encode KvValueEncoder) []byte {
+	if bs, err := ValueEncode(value, encode); err == nil {
+		return bs
+	}
+	return []byte{}
+}
+
 func ValueEncode(value interface{}, encode KvValueEncoder) ([]byte, error) {
 
 	var enc_value []byte
