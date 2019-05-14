@@ -25,6 +25,7 @@ type Queryer interface {
 	Select(s string) Queryer
 	From(s string) Queryer
 	Order(s string) Queryer
+	Group(s string) Queryer
 	Limit(num int64) Queryer
 	Offset(num int64) Queryer
 	Parse() (sql string, params []interface{})
