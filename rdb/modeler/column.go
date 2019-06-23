@@ -40,14 +40,14 @@ var columnTypes = map[string]string{
 
 // database column
 type Column struct {
-	Name     string   `json:"name"`
-	Type     string   `json:"type"`
-	Length   string   `json:"length,omitempty"`
-	NullAble bool     `json:"null_able,omitempty"`
-	IncrAble bool     `json:"incr_able,omitempty"`
-	Default  string   `json:"default,omitempty"`
-	Comment  string   `json:"comment,omitempty"`
-	Extra    []string `json:"extra,omitempty"`
+	Name        string   `json:"name"`
+	Type        string   `json:"type"`
+	Length      string   `json:"length,omitempty"`
+	NotNullAble bool     `json:"not_null_able,omitempty"`
+	IncrAble    bool     `json:"incr_able,omitempty"`
+	Default     string   `json:"default,omitempty"`
+	Comment     string   `json:"comment,omitempty"`
+	Extra       []string `json:"extra,omitempty"`
 }
 
 func (it *Column) IsInt() bool {
@@ -72,9 +72,15 @@ func (it *Column) IsNumber() bool {
 	return false
 }
 
+func (it *Column) IsChar() bool {
+	if strings.HasPrefix(it.Type, "string") {
+		return true
+	}
+	return false
+}
+
 func (it *Column) Fix() {
-	if it.IsInt() || it.IsFloat() {
-		it.NullAble = true
+	if it.IsNumber() {
 		it.Default = "0"
 	}
 	if !it.IsInt() {
@@ -122,17 +128,17 @@ func (it *Column) Fix() {
 	}
 }
 
-func NewColumn(colName, colType, len string, null bool, def string) *Column {
+func NewColumn(colName, colType, len string, def string) *Column {
 
 	c := &Column{
-		Name:     colName,
-		Type:     colType,
-		Length:   len,
-		NullAble: null,
-		IncrAble: false,
-		Default:  def,
-		Comment:  "",
-		Extra:    []string{},
+		Name:        colName,
+		Type:        colType,
+		Length:      len,
+		NotNullAble: false,
+		IncrAble:    false,
+		Default:     def,
+		Comment:     "",
+		Extra:       []string{},
 	}
 	c.Fix()
 	return c
