@@ -18,41 +18,53 @@ import (
 	"bytes"
 )
 
-func NewObjectReader() *ObjectReader {
-	return &ObjectReader{}
+func NewObjectReader(key []byte) *ObjectReader {
+	r := &ObjectReader{}
+	return r.KeySet(key)
 }
 
 func (it *ObjectReader) KeySet(key []byte) *ObjectReader {
-	it.Mode = ObjectReaderModeKey
-	for _, v := range it.Keys {
-		if bytes.Compare(v, key) == 0 {
-			return it
+	if len(key) > 0 {
+		it.Mode = ObjectReaderModeKey
+		for _, v := range it.Keys {
+			if bytes.Compare(v, key) == 0 {
+				return it
+			}
 		}
+		it.Keys = append(it.Keys, key)
 	}
-	it.Keys = append(it.Keys, key)
 	return it
 }
 
 func (it *ObjectReader) KeyRangeSet(keyOffset, keyCutset []byte) *ObjectReader {
-	it.Mode = ObjectReaderModeKeyRange
+	it.Mode = AttrAppend(it.Mode, ObjectReaderModeKeyRange)
 	it.KeyOffset = keyOffset
 	it.KeyCutset = keyCutset
-	if it.LimitNum == 0 {
+	if it.LimitNum <= 0 {
 		it.LimitNum = 10
+	}
+	return it
+}
+
+func (it *ObjectReader) LogOffsetSet(logOffset uint64) *ObjectReader {
+	it.Mode = AttrAppend(it.Mode, ObjectReaderModeLogRange)
+	it.LogOffset = logOffset
+	if it.LimitNum <= 0 {
+		it.LimitNum = 10
+	}
+	return it
+}
+
+func (it *ObjectReader) ModeRevRangeSet(v bool) *ObjectReader {
+	if v {
+		it.Mode = AttrAppend(it.Mode, ObjectReaderModeRevRange)
+	} else {
+		it.Mode = AttrRemove(it.Mode, ObjectReaderModeRevRange)
 	}
 	return it
 }
 
 func (it *ObjectReader) LimitNumSet(num int64) *ObjectReader {
 	it.LimitNum = num
-	return it
-}
-
-func (it *ObjectReader) RevRangeSet(v bool) *ObjectReader {
-	if v {
-		it.Mode = AttrAppend(it.Mode, ObjectReaderModeRevRange)
-	} else {
-		it.Mode = AttrRemove(it.Mode, ObjectReaderModeRevRange)
-	}
 	return it
 }

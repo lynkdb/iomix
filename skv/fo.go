@@ -29,6 +29,7 @@ const (
 )
 
 type FileObjectConnector interface {
+	Close() error
 	// FoMpInit(sets FileObjectEntryInit) Result
 	// FoMpPut(sets FileObjectEntryBlock) Result
 	// FoMpGet(sets FileObjectEntryBlock) Result
@@ -40,6 +41,10 @@ type FileObjectConnector interface {
 }
 
 func (it *FileObjectEntryMeta) AttrAllow(v uint64) bool {
+	return ((v & it.Attrs) == v)
+}
+
+func (it *FileObjectEntryBlock) AttrAllow(v uint64) bool {
 	return ((v & it.Attrs) == v)
 }
 

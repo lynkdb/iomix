@@ -25,6 +25,7 @@ message ObjectMeta {
 	uint64 incr_id = 3;
 	uint64 created = 4;
 	uint64 updated = 5;
+	uint64 attrs = 6;
 	uint64 expired = 11;
 	uint64 data_attrs = 12;
 	uint64 data_check = 13;
@@ -48,17 +49,30 @@ message ObjectReader {
     int64 limit_size = 9;
 	bytes key_offset = 12;
 	bytes key_cutset = 13;
+	uint64 log_offset = 14;
 }
 
 message ObjectWriter {
+    uint64 mode = 1;
 	ObjectMeta meta = 2;
 	ObjectData data = 3;
 	uint64 prev_version = 5;
+	uint64 prev_data_check = 6;
+	string incr_namespace = 7;
+	uint64 proposal_expired = 16; 
 }
 
 message ObjectResult {
 	uint64 status = 1;
 	string message = 2;
+	ObjectMeta meta = 8;
 	repeated ObjectItem items = 9;
 	bool next = 12;
+}
+
+service Object {
+    rpc Query (ObjectReader) returns (ObjectResult) {}
+    rpc Commit (ObjectWriter) returns (ObjectResult) {}
+    rpc Prepare (ObjectWriter) returns (ObjectResult) {}
+    rpc Accept (ObjectWriter) returns (ObjectResult) {}
 }

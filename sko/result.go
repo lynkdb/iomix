@@ -14,6 +14,10 @@
 
 package sko
 
+import (
+	"errors"
+)
+
 const (
 	_ uint64 = iota
 	ResultOK
@@ -21,7 +25,6 @@ const (
 	ResultNotFound
 	ResultClientError
 	ResultServerError
-	ResultNetError
 	ResultUnAuth
 )
 
@@ -47,6 +50,10 @@ func NewObjectResultOK() *ObjectResult {
 	return NewObjectResult(ResultOK, nil)
 }
 
+func NewObjectResultNotFound() *ObjectResult {
+	return NewObjectResult(ResultNotFound, nil)
+}
+
 func NewObjectResultClientError(err error) *ObjectResult {
 	return NewObjectResult(ResultClientError, err)
 }
@@ -68,9 +75,17 @@ func (it *ObjectResult) NotFound() bool {
 	return it.Status == ResultNotFound
 }
 
+func (it *ObjectResult) Error() error {
+	return errors.New(it.Message)
+}
+
 func (it *ObjectResult) DataValue() DataValue {
 	if len(it.Items) > 0 && it.Items[0].Data != nil {
 		return DataValue(it.Items[0].Data.Value)
 	}
 	return DataValue{}
+}
+
+func (it *ObjectResult) Decode(obj interface{}) error {
+	return it.DataValue().Decode(&obj, nil)
 }

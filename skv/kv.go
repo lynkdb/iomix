@@ -35,4 +35,5 @@ type KvConnector interface {
 	KvScan(offset, cutset []byte, limit int) Result
 	KvRevScan(offset, cutset []byte, limit int) Result
 	KvIncr(key []byte, increment int64) Result
+	RawScan(offset, cutset []byte, limit int) Result
 }

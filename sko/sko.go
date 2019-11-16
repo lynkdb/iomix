@@ -14,29 +14,43 @@
 
 //go:generate protoc --go_out=plugins=grpc:. sko.proto
 //go:generate protobuf_slice "*.proto"
-//go:generate sed -i "s/json:\"id,omitempty\"/json:\"id\"/g" sko.pb.go
+//--go:generate sed -i "s/json:\"id,omitempty\"/json:\"id\"/g" sko.pb.go
 
 package sko // import "github.com/lynkdb/iomix/sko"
 
 const (
 	// 1:version|1:meta-size|meta-bytes|data-bytes
-	objectRawBytesVersion1   uint8  = 2
-	ObjectReaderModeKey      uint64 = 1 << 0
-	ObjectReaderModeKeyRange uint64 = 1 << 1
-	ObjectReaderModeRevRange uint64 = 1 << 2
-	ObjectReaderLimitNumMax  int64  = 1000
-	ObjectReaderLimitSizeMax int64  = 8 * 1024 * 1024
-	ObjectReaderLimitSizeDef int64  = ObjectReaderLimitSizeMax
-	objectMetaKeyLenMin      int    = 4
-	objectMetaKeyLenMax      int    = 64
+	objectRawBytesVersion1 uint8 = 2
 )
 
-// Object APIs
-type ObjectConnector interface {
-	ObjectPut(rq *ObjectWriter) *ObjectResult
-	ObjectDel(rq *ObjectWriter) *ObjectResult
-	ObjectQuery(rq *ObjectReader) *ObjectResult
-	NewObjectWriter(key []byte) *ObjectWriter
-	NewObjectReader() *ObjectReader
-	Close() error
-}
+const (
+	ObjectWriterModePut    uint64 = 1 << 0
+	ObjectWriterModeCreate uint64 = 1 << 1
+	ObjectWriterModeDelete uint64 = 1 << 2
+)
+
+const (
+	ObjectReaderModeKey      uint64 = 1 << 0
+	ObjectReaderModeKeyRange uint64 = 1 << 1
+	ObjectReaderModeLogRange uint64 = 1 << 2
+	ObjectReaderModeRevRange uint64 = 1 << 3
+)
+
+const (
+	ObjectReaderLimitNumMax  int64 = 1000
+	ObjectReaderLimitSizeMax int64 = 8 * 1024 * 1024
+	ObjectReaderLimitSizeDef int64 = ObjectReaderLimitSizeMax
+)
+
+const (
+	ObjectMetaAttrDelete uint64 = 1 << 32
+)
+
+const (
+	objectMetaKeyLenMin int = 4
+	objectMetaKeyLenMax int = 128
+)
+
+const (
+	ObjectClusterNodeMax int = 7
+)

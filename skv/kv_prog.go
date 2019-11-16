@@ -175,6 +175,16 @@ func (k *KvProgKey) FoldLen() int {
 	return n
 }
 
+func (k *KvProgKey) DumpArrayString() []string {
+	as := []string{}
+	for _, v := range k.Items {
+		// if v.Type == KvProgKeyEntryBytes {
+		as = append(as, string(v.Data))
+		// }
+	}
+	return as
+}
+
 func (k *KvProgKey) Encode(ns uint8) []byte {
 	// if len(k_enc) > 0 {
 	// 	return k_enc

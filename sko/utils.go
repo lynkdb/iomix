@@ -15,6 +15,8 @@
 package sko // import "github.com/lynkdb/iomix/sko"
 
 import (
+	"encoding/binary"
+	"encoding/hex"
 	"errors"
 	"hash/crc32"
 
@@ -48,6 +50,10 @@ func (it *ObjectItem) DataValue() DataValue {
 	return DataValue{}
 }
 
+func (it *ObjectItem) Decode(obj interface{}) error {
+	return it.DataValue().Decode(&obj, nil)
+}
+
 func ObjectMetaDecode(bs []byte) (*ObjectMeta, error) {
 
 	if len(bs) > 2 &&
@@ -75,7 +81,7 @@ func objectMetaKeyValid(key []byte) bool {
 		if (v >= 'a' && v <= 'z') ||
 			(v >= 'A' && v <= 'Z') ||
 			(v >= '0' && v <= '9') ||
-			(v == ':') {
+			(v == ':') || (v == '-') || (v == '_') || (v == '/') || (v == '.') {
 			continue
 		}
 
@@ -84,6 +90,7 @@ func objectMetaKeyValid(key []byte) bool {
 
 	return true
 }
+
 func ObjectItemDecode(bs []byte) (*ObjectItem, error) {
 
 	meta, err := ObjectMetaDecode(bs)
@@ -121,4 +128,24 @@ func protobufEncode(obj proto.Message) ([]byte, error) {
 
 func protobufDecode(bs []byte, obj proto.Message) error {
 	return proto.Unmarshal(bs, obj)
+}
+
+func Uint32ToHexString(v uint32) string {
+	return hex.EncodeToString(Uint32ToBytes(v))
+}
+
+func Uint64ToHexString(v uint64) string {
+	return hex.EncodeToString(Uint64ToBytes(v))
+}
+
+func Uint32ToBytes(v uint32) []byte {
+	bs := make([]byte, 4)
+	binary.BigEndian.PutUint32(bs, v)
+	return bs
+}
+
+func Uint64ToBytes(v uint64) []byte {
+	bs := make([]byte, 8)
+	binary.BigEndian.PutUint64(bs, v)
+	return bs
 }

@@ -16,16 +16,42 @@ package sko // import "github.com/lynkdb/iomix/sko"
 
 import (
 	"errors"
+	"regexp"
 	"time"
 )
 
-func NewObjectWriter(key []byte) *ObjectWriter {
+var (
+	incrNamespaceReg = regexp.MustCompile("^[a-z]{1}[a-z0-9]{3,9}$")
+)
+
+func NewObjectWriter(key []byte, value interface{}) *ObjectWriter {
 	r := &ObjectWriter{
 		Meta: &ObjectMeta{
 			Key: key,
 		},
 	}
-	return r
+	return r.DataValueSet(value, nil)
+}
+
+func (it *ObjectWriter) ModeCreateSet(v bool) *ObjectWriter {
+	it.Mode = it.Mode | ObjectWriterModeCreate
+	if !v {
+		it.Mode = it.Mode - ObjectWriterModeCreate
+	}
+	return it
+}
+
+func (it *ObjectWriter) IncrNamespaceSet(ns string) *ObjectWriter {
+	it.IncrNamespace = ns
+	return it
+}
+
+func (it *ObjectWriter) ModeDeleteSet(v bool) *ObjectWriter {
+	it.Mode = it.Mode | ObjectWriterModeDelete
+	if !v {
+		it.Mode = it.Mode - ObjectWriterModeDelete
+	}
+	return it
 }
 
 func (it *ObjectWriter) ExpireSet(v int64) *ObjectWriter {
@@ -35,20 +61,28 @@ func (it *ObjectWriter) ExpireSet(v int64) *ObjectWriter {
 	return it
 }
 
-func (it *ObjectWriter) DelValid() error {
+func (it *ObjectWriter) DataValueSet(
+	value interface{}, codec DataValueCodec) *ObjectWriter {
 
-	if it.Meta == nil {
-		return errors.New("Meta Not Found")
+	if value != nil {
+
+		if codec == nil {
+			codec = dataValueCodecStd
+		}
+
+		bsValue, err := codec.Encode(value)
+		if err == nil {
+			it.Data = &ObjectData{
+				Check: bytesCrc32Checksum(bsValue),
+				Value: bsValue,
+			}
+		}
 	}
 
-	if !objectMetaKeyValid(it.Meta.Key) {
-		return errors.New("Invalid Meta/Key")
-	}
-
-	return nil
+	return it
 }
 
-func (it *ObjectWriter) PutValid() error {
+func (it *ObjectWriter) CommitValid() error {
 
 	if it.Meta == nil {
 		return errors.New("Meta Not Found")
@@ -56,6 +90,17 @@ func (it *ObjectWriter) PutValid() error {
 
 	if !objectMetaKeyValid(it.Meta.Key) {
 		return errors.New("Invalid Meta/Key")
+	}
+
+	if AttrAllow(it.Mode, ObjectWriterModeDelete) {
+		it.IncrNamespace = ""
+		it.Meta.Updated = uint64(time.Now().UnixNano() / 1e6)
+		return nil
+	}
+
+	if (it.Meta.IncrId > 0 || it.IncrNamespace != "") &&
+		!incrNamespaceReg.MatchString(it.IncrNamespace) {
+		return errors.New("Invalid IncrNamespace")
 	}
 
 	if it.Data == nil {
@@ -79,46 +124,27 @@ func (it *ObjectWriter) PutValid() error {
 	return nil
 }
 
-func (it *ObjectWriter) DataValueSet(
-	value interface{}, codec DataValueCodec) *ObjectWriter {
+func (it *ObjectWriter) MetaEncode() ([]byte, error) {
 
-	if codec == nil {
-		codec = dataValueCodecStd
+	meta, err := protobufEncode(it.Meta)
+	if err == nil && len(meta) > 0 {
+		return append([]byte{objectRawBytesVersion1, uint8(len(meta))}, meta...), nil
 	}
 
-	bsValue, err := codec.Encode(value)
-	if err == nil {
-		it.Data = &ObjectData{
-			Check: bytesCrc32Checksum(bsValue),
-			Value: bsValue,
-		}
-	}
-
-	return it
+	return nil, errors.New("invalid meta")
 }
 
 func (it *ObjectWriter) PutEncode() ([]byte, []byte, error) {
 
-	var (
-		meta []byte
-		data []byte
-		err  error
-	)
-
-	meta, err = protobufEncode(it.Meta)
-	if err == nil && len(meta) > 0 {
-		data, err = protobufEncode(it.Data)
-	}
-
+	meta, err := it.MetaEncode()
 	if err != nil {
 		return nil, nil, err
 	}
 
-	if len(meta) < 1 || len(data) < 1 {
-		return nil, nil, errors.New("invalid meta or data")
+	data, err := protobufEncode(it.Data)
+	if err != nil || len(data) < 1 {
+		return nil, nil, errors.New("invalid data")
 	}
 
-	metav := append([]byte{objectRawBytesVersion1, uint8(len(meta))}, meta...)
-
-	return metav, append(metav, data...), nil
+	return meta, append(meta, data...), nil
 }
