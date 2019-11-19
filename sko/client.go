@@ -101,6 +101,11 @@ func (it *ClientWriter) ExpireSet(v int64) *ClientWriter {
 	return it
 }
 
+func (it *ClientWriter) PrevDataCheckSet(v interface{}) *ClientWriter {
+	it.writer.PrevDataCheckSet(v)
+	return it
+}
+
 func (it *ClientWriter) DataValueSet(
 	value interface{}, codec DataValueCodec) *ClientWriter {
 	it.writer.DataValueSet(value, codec)

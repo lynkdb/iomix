@@ -82,6 +82,20 @@ func (it *ObjectWriter) DataValueSet(
 	return it
 }
 
+func (it *ObjectWriter) PrevDataCheckSet(
+	value interface{}) *ObjectWriter {
+
+	if value != nil {
+
+		bsValue, err := dataValueCodecStd.Encode(value)
+		if err == nil {
+			it.PrevDataCheck = bytesCrc32Checksum(bsValue)
+		}
+	}
+
+	return it
+}
+
 func (it *ObjectWriter) CommitValid() error {
 
 	if it.Meta == nil {
