@@ -50,17 +50,21 @@ var baseStmts = map[string]string{
 }
 
 func NewBase(opts connect.ConnOptions, db *sql.DB) (*Base, error) {
-	return &Base{
+	b := &Base{
 		opts:  opts,
 		db:    db,
-		stmts: baseStmts,
+		stmts: map[string]string{},
 		QuoteStr: func(name string) string {
 			if name == "*" {
 				return name
 			}
 			return "`" + name + "`"
 		},
-	}, nil
+	}
+	for k, v := range baseStmts {
+		b.stmts[k] = v
+	}
+	return b, nil
 }
 
 func (dc *Base) Setup(opts connect.ConnOptions, conn *sql.DB) error {
