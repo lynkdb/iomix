@@ -28,7 +28,7 @@ import (
 
 type Result sql.Result
 
-type BaseStmtBindVarFunc func(sql string, num int) string
+type BaseStmtBindVarFunc func(sql string, vars []interface{}) (string, []interface{})
 type BaseQuoteStrFunc func(name string) string
 
 type Base struct {
@@ -89,7 +89,7 @@ func (dc *Base) DB() *sql.DB {
 	return dc.db
 }
 
-func (dc *Base) Insert(table_name string, item map[string]interface{}) (Result, error) {
+func (dc *Base) Insert(tableName string, item map[string]interface{}) (Result, error) {
 
 	var res Result
 
@@ -106,12 +106,12 @@ func (dc *Base) Insert(table_name string, item map[string]interface{}) (Result, 
 	}
 
 	sql := fmt.Sprintf(sqlstmt,
-		dc.QuoteStr(table_name),
+		dc.QuoteStr(tableName),
 		strings.Join(cols, ","),
 		strings.Join(vars, ","))
 
 	if dc.BindVar != nil {
-		sql = dc.BindVar(sql, len(vals))
+		sql, vals = dc.BindVar(sql, vals)
 	}
 
 	stmt, err := dc.db.Prepare(sql)
@@ -128,7 +128,7 @@ func (dc *Base) Insert(table_name string, item map[string]interface{}) (Result, 
 	return res, nil
 }
 
-func (dc *Base) Delete(table_name string, fr Filter) (Result, error) {
+func (dc *Base) Delete(tableName string, fr Filter) (Result, error) {
 
 	var res Result
 
@@ -142,10 +142,10 @@ func (dc *Base) Delete(table_name string, fr Filter) (Result, error) {
 		return res, errors.New("CurdStmt:delete missing")
 	}
 
-	sql := fmt.Sprintf(sqlstmt, table_name, frsql)
+	sql := fmt.Sprintf(sqlstmt, tableName, frsql)
 
 	if dc.BindVar != nil {
-		sql = dc.BindVar(sql, len(params))
+		sql, params = dc.BindVar(sql, params)
 	}
 
 	stmt, err := dc.db.Prepare(sql)
@@ -162,7 +162,7 @@ func (dc *Base) Delete(table_name string, fr Filter) (Result, error) {
 	return res, nil
 }
 
-func (dc *Base) Update(table_name string, item map[string]interface{}, fr Filter) (Result, error) {
+func (dc *Base) Update(tableName string, item map[string]interface{}, fr Filter) (Result, error) {
 
 	var res Result
 
@@ -185,12 +185,12 @@ func (dc *Base) Update(table_name string, item map[string]interface{}, fr Filter
 	}
 
 	sql := fmt.Sprintf(sqlstmt,
-		table_name,
+		tableName,
 		strings.Join(cols, ","),
 		frsql)
 
 	if dc.BindVar != nil {
-		sql = dc.BindVar(sql, len(vals))
+		sql, vals = dc.BindVar(sql, vals)
 	}
 
 	stmt, err := dc.db.Prepare(sql)
@@ -207,7 +207,7 @@ func (dc *Base) Update(table_name string, item map[string]interface{}, fr Filter
 	return res, nil
 }
 
-func (dc *Base) Count(table_name string, fr Filter) (num int64, err error) {
+func (dc *Base) Count(tableName string, fr Filter) (num int64, err error) {
 
 	frsql, params := fr.Parse()
 	has_where := "WHERE"
@@ -220,10 +220,10 @@ func (dc *Base) Count(table_name string, fr Filter) (num int64, err error) {
 		return 0, errors.New("CurdStmt:update missing")
 	}
 
-	sql := fmt.Sprintf(sqlstmt, table_name, has_where, frsql)
+	sql := fmt.Sprintf(sqlstmt, tableName, has_where, frsql)
 
 	if dc.BindVar != nil {
-		sql = dc.BindVar(sql, len(params))
+		sql, params = dc.BindVar(sql, params)
 	}
 
 	stmt, err := dc.db.Prepare(sql)
@@ -238,7 +238,7 @@ func (dc *Base) Count(table_name string, fr Filter) (num int64, err error) {
 	return num, err
 }
 
-func (dc *Base) InsertIgnore(table_name string, item map[string]interface{}) (Result, error) {
+func (dc *Base) InsertIgnore(tableName string, item map[string]interface{}) (Result, error) {
 
 	var res Result
 
@@ -254,10 +254,10 @@ func (dc *Base) InsertIgnore(table_name string, item map[string]interface{}) (Re
 		vals = append(vals, val)
 	}
 
-	sql := fmt.Sprintf(sqlstmt, table_name, strings.Join(cols, ","), strings.Join(vars, ","))
+	sql := fmt.Sprintf(sqlstmt, tableName, strings.Join(cols, ","), strings.Join(vars, ","))
 
 	if dc.BindVar != nil {
-		sql = dc.BindVar(sql, len(vals))
+		sql, vals = dc.BindVar(sql, vals)
 	}
 
 	stmt, err := dc.db.Prepare(sql)
@@ -274,10 +274,63 @@ func (dc *Base) InsertIgnore(table_name string, item map[string]interface{}) (Re
 	return res, nil
 }
 
+func (dc *Base) BatchInsertIgnore(tableName string, cols []string, values ...interface{}) (Result, error) {
+
+	var res Result
+
+	if len(cols) == 0 || len(values) == 0 {
+		return res, errors.New("no data request")
+	}
+
+	if (len(values) % len(cols)) != 0 {
+		return res, errors.New("invalid data request")
+	}
+
+	sqlstmt, ok := dc.stmts["insertIgnore"]
+	if !ok {
+		return res, errors.New("CurdStmt:insertIgnore missing")
+	}
+
+	colx := ""
+	for _, v := range cols {
+		if colx != "" {
+			colx += ","
+		}
+		colx += dc.QuoteStr(v)
+	}
+
+	varx := "?"
+	if len(cols) > 1 {
+		varx += strings.Repeat(",?", len(cols)-1)
+	}
+	if n := (len(values) / len(cols)); n > 1 {
+		varx += strings.Repeat("),("+varx, n-1)
+	}
+
+	sql := fmt.Sprintf(sqlstmt, tableName, colx, varx)
+
+	if dc.BindVar != nil {
+		sql, values = dc.BindVar(sql, values)
+	}
+
+	stmt, err := dc.db.Prepare(sql)
+	if err != nil {
+		return res, err
+	}
+	defer stmt.Close()
+
+	res, err = stmt.Exec(values...)
+	if err != nil {
+		return res, err
+	}
+
+	return res, nil
+}
+
 func (dc *Base) QueryRaw(sql string, params ...interface{}) (rs []Entry, err error) {
 
 	if dc.BindVar != nil {
-		sql = dc.BindVar(sql, len(params))
+		sql, params = dc.BindVar(sql, params)
 	}
 
 	stmt, err := dc.db.Prepare(sql)
@@ -341,7 +394,7 @@ func (dc *Base) Query(q Queryer) (rs []Entry, err error) {
 	}
 
 	if dc.BindVar != nil {
-		sql = dc.BindVar(sql, len(params))
+		sql, params = dc.BindVar(sql, params)
 	}
 
 	return dc.QueryRaw(sql, params...)
@@ -362,7 +415,7 @@ func (dc *Base) Fetch(q Queryer) (Entry, error) {
 	}
 
 	if dc.BindVar != nil {
-		sql = dc.BindVar(sql, len(params))
+		sql, params = dc.BindVar(sql, params)
 	}
 
 	rs, err := dc.QueryRaw(sql, params...)
