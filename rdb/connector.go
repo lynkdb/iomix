@@ -34,6 +34,7 @@ type Queryer interface {
 }
 
 type Filter interface {
+	Reset() Filter
 	And(expr string, args ...interface{}) Filter
 	Or(expr string, args ...interface{}) Filter
 	Parse() (where string, params []interface{})
